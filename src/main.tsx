@@ -8,11 +8,14 @@ import { ThemeProvider } from './contexts/ThemeContext'
 
 const queryClient = new QueryClient()
 
+// Определяем base path для GitHub Pages
+const basename = import.meta.env.BASE_URL || '/'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={basename}>
           <App />
         </BrowserRouter>
       </ThemeProvider>
