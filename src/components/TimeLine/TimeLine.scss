@@ -1,0 +1,11 @@
+.timeline-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  
+  // Улучшенная прокрутка для Firefox
+  scrollbar-width: thin;
+  
+  // Плавная прокрутка
+  scroll-behavior: smooth;
+}
+

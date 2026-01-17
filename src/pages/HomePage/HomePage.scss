@@ -1,0 +1,14 @@
+.home-page {
+  text-align: center;
+  padding: 48px 24px;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+}
+

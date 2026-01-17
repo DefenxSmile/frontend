@@ -1,0 +1,335 @@
+.floor-plan-editor {
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+
+  &__container {
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    overflow: hidden;
+    overscroll-behavior: none;
+    min-height: 0;
+    padding: 12px;
+    
+    > * {
+      flex-shrink: 0;
+    }
+  }
+
+  &__sidebar {
+    width: 260px;
+    min-width: 260px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border-radius: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    height: 100%;
+    min-height: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #E0E0E0;
+      border-radius: 2px;
+
+      &:hover {
+        background: #BDBDBD;
+      }
+    }
+  }
+
+  &__sidebar-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+
+  &__tools {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__tool {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &.active {
+      box-shadow: 0 2px 8px rgba(255, 107, 1, 0.25);
+      transform: translateY(-1px);
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  &__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__canvas-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  &__canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: #FAFBFC;
+    border-radius: 12px 12px 0 0;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+
+    canvas {
+      display: block;
+      cursor: default;
+      overscroll-behavior: none;
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+
+  &__info {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #FFFFFF;
+    border-top: 1px solid #F0F0F0;
+    border-radius: 0 0 12px 12px;
+
+    .MuiChip-root {
+      font-size: 11px;
+      height: 24px;
+      font-weight: 500;
+      background: #F5F7FA;
+      border-color: #E0E0E0;
+      color: #666;
+    }
+
+    .MuiTypography-body2 {
+      margin-left: auto;
+      font-size: 11px;
+      color: #999;
+      font-weight: 500;
+    }
+  }
+}
+
+// Современные стили для кнопок и элементов
+.MuiButton-root {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.2px;
+  border-radius: 8px;
+  
+  &.MuiButton-containedPrimary {
+    background: linear-gradient(135deg, #FF6B01 0%, #E55A00 100%);
+    box-shadow: 0 2px 8px rgba(255, 107, 1, 0.3);
+    
+    &:hover {
+      background: linear-gradient(135deg, #E55A00 0%, #CC4F00 100%);
+      box-shadow: 0 4px 12px rgba(255, 107, 1, 0.4);
+    }
+  }
+}
+
+.MuiIconButton-root {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: scale(1.1);
+    background-color: rgba(255, 107, 1, 0.08);
+  }
+}
+
+.MuiPaper-root {
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.MuiChip-root {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+// Адаптивность
+@media (max-width: 1024px) {
+  .floor-plan-editor {
+    &__container {
+      flex-direction: column;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    &__sidebar {
+      width: 100%;
+      min-width: auto;
+      max-height: 200px;
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 12px;
+
+      .floor-plan-editor__tools {
+        flex-direction: row;
+        gap: 6px;
+      }
+
+      .floor-plan-editor__actions {
+        flex-direction: row;
+      }
+    }
+  }
+}
+
+// Улучшенные стили для диалога
+.MuiDialog-paper {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+.MuiDialogTitle-root {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A1A;
+  padding: 24px 24px 16px;
+  letter-spacing: -0.3px;
+}
+
+.MuiDialogContent-root {
+  padding: 16px 24px;
+}
+
+.MuiDialogActions-root {
+  padding: 16px 24px;
+  gap: 8px;
+}
+
+// Анимации
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floor-plan-editor__sidebar {
+  animation: fadeIn 0.2s ease;
+}
+
+// Улучшенные тени и эффекты
+.floor-plan-editor__tool {
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// Стили для выбранных элементов
+.floor-plan-editor__canvas-container {
+  canvas {
+    &:hover {
+      cursor: default;
+    }
+  }
+}
+
+// Современные стили для TextField
+.MuiTextField-root {
+  .MuiOutlinedInput-root {
+    border-radius: 8px;
+    font-size: 14px;
+    
+    &:hover {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: #FF6B01;
+      }
+    }
+    
+    &.Mui-focused {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: #FF6B01;
+        border-width: 2px;
+      }
+    }
+  }
+}
+
+// Стили для Divider
+.MuiDivider-root {
+  border-color: #F0F0F0;
+  margin: 16px 0;
+}
+
+// Стили для Typography
+.MuiTypography-h6 {
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #1A1A1A;
+}
+
+.MuiTypography-subtitle2 {
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #333;
+}
+
+.MuiTypography-caption {
+  font-weight: 500;
+  color: #666;
+  line-height: 1.4;
+}
