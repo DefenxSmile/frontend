@@ -6,10 +6,28 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
-// Определяем base path для GitHub Pages
-const basename = import.meta.env.BASE_URL || '/'
+// Определяем base path из переменных окружения
+const basename = import.meta.env.VITE_BASE_URL || import.meta.env.BASE_URL || '/'
+
+// Логирование переменных окружения в development режиме
+if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEBUG === 'true') {
+  console.log('Environment variables:', {
+    mode: import.meta.env.MODE,
+    baseUrl: basename,
+    apiUrl: import.meta.env.VITE_API_URL,
+    appName: import.meta.env.VITE_APP_NAME,
+    appVersion: import.meta.env.VITE_APP_VERSION,
+  })
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
