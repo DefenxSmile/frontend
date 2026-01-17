@@ -5,7 +5,6 @@ const API_BASE_URL = config.apiUrl
 
 export const floorPlanApi = {
   save: async (data: FloorPlanData): Promise<{ success: boolean; id?: string }> => {
-    // TODO: Заменить на реальный API endpoint
     const response = await fetch(`${API_BASE_URL}/floor-plans`, {
       method: 'POST',
       headers: {
@@ -22,7 +21,6 @@ export const floorPlanApi = {
   },
 
   load: async (id: string): Promise<FloorPlanData> => {
-    // TODO: Заменить на реальный API endpoint
     const response = await fetch(`${API_BASE_URL}/floor-plans/${id}`)
 
     if (!response.ok) {
