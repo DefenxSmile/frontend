@@ -1,4 +1,11 @@
-name: Build and Deploy
+name: Build and Deploy to GitHub Pages
+
+# ⚠️ ВНИМАНИЕ: GitHub Pages для приватных репозиториев доступен только на платных планах
+# Для приватных репозиториев используйте альтернативные варианты:
+# - Vercel (рекомендуется): используйте deploy-vercel.yml
+# - Netlify: используйте deploy-netlify.yml  
+# - Cloudflare Pages: используйте deploy-cloudflare.yml
+# Подробнее: см. DEPLOYMENT_OPTIONS.md
 
 on:
   push:
