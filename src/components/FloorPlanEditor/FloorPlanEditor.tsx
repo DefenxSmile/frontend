@@ -45,6 +45,10 @@ import type { FloorPlanElement, FloorPlanData, TableShape, Floor } from '../../t
 import PropertiesPanel from './PropertiesPanel'
 import TableShapeSelector from './TableShapeSelector'
 import TableConstructorModal, { type TableConfig } from './TableConstructorModal'
+import { FurnitureRenderer } from './renderers/FurnitureRenderer'
+import { snapToGrid as snapToGridUtil } from './utils/grid'
+import { clampZoom } from './utils/canvas'
+import { STAGE_WIDTH, STAGE_HEIGHT, GRID_SIZE } from './constants'
 import './FloorPlanEditor.scss'
 
 interface FloorPlanEditorProps {
@@ -55,12 +59,6 @@ interface FloorPlanEditorProps {
 }
 
 type ToolType = 'select' | 'table' | 'wall' | 'door' | 'window'
-
-const STAGE_WIDTH = 2000
-const STAGE_HEIGHT = 1500
-const GRID_SIZE = 20
-const MIN_ZOOM = 0.5
-const MAX_ZOOM = 3
 
 const FloorPlanEditor = ({ 
   clientName: initialClientName, 
@@ -243,8 +241,7 @@ const FloorPlanEditor = ({
   // Snap to grid функция
   const snapToGridValue = useCallback(
     (value: number) => {
-      if (!snapToGrid) return value
-      return Math.round(value / GRID_SIZE) * GRID_SIZE
+      return snapToGridUtil(value, snapToGrid)
     },
     [snapToGrid]
   )
@@ -1086,7 +1083,7 @@ const FloorPlanEditor = ({
   }
 
   const handleZoom = (delta: number) => {
-    setScale((prev) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta)))
+    setScale((prev) => clampZoom(prev + delta))
   }
 
   const handleFitScreen = () => {
@@ -1109,7 +1106,7 @@ const FloorPlanEditor = ({
     }
 
     const newScale = e.evt.deltaY > 0 ? oldScale * 0.95 : oldScale * 1.05
-    const clampedScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale))
+    const clampedScale = clampZoom(newScale)
 
     setScale(clampedScale)
     setPosition({
@@ -1258,128 +1255,7 @@ const FloorPlanEditor = ({
     return lines
   }
 
-  // Функция для рендеринга детальной мебели (как в TableConstructorModal)
-  const renderFurnitureItem = (
-    x: number,
-    y: number,
-    rotation: number,
-    furnitureType: 'chair' | 'sofa' | 'armchair' | undefined,
-    shape: 'straight' | 'curved' | 'l-shaped' | 'l-shaped-reverse' | 'round' | undefined,
-    key: string | number
-  ) => {
-    const scale = 1 // Масштаб для основного конструктора
-    const furnitureTypeValue = furnitureType || 'chair'
-    const shapeValue = shape || 'straight'
-
-    if (furnitureTypeValue === 'sofa') {
-      // Диваны - реалистичная визуализация
-      const sofaWidth = 28 * scale
-      const sofaHeight = 14 * scale
-      const sofaDepth = 3 * scale
-      
-      if (shapeValue === 'l-shaped') {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={sofaWidth / 2 - 2 * scale} y={-sofaHeight / 2} width={sofaHeight + 2 * scale} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
-            <Rect x={sofaWidth / 2 - 2 * scale} y={-sofaHeight / 2 - sofaDepth} width={sofaHeight + 2 * scale} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={sofaWidth / 2 + sofaHeight - 2 * scale} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Line points={[-sofaWidth / 4, -sofaHeight / 2, -sofaWidth / 4, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-            <Line points={[sofaWidth / 4, -sofaHeight / 2, sofaWidth / 4, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-          </Group>
-        )
-      } else if (shapeValue === 'l-shaped-reverse') {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={-sofaWidth / 2 - sofaHeight} y={-sofaHeight / 2} width={sofaHeight} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
-            <Rect x={-sofaWidth / 2 - sofaHeight} y={-sofaHeight / 2 - sofaDepth} width={sofaHeight} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={-sofaWidth / 2 - sofaHeight - sofaDepth} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Line points={[-sofaWidth / 4, -sofaHeight / 2, -sofaWidth / 4, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-          </Group>
-        )
-      } else if (shapeValue === 'curved') {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={sofaHeight / 2} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={sofaDepth / 2} />
-            <Line points={[-sofaWidth / 3, -sofaHeight / 2, -sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-            <Line points={[sofaWidth / 3, -sofaHeight / 2, sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-          </Group>
-        )
-      } else {
-        // Прямой диван
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
-            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={-sofaWidth / 2 - sofaDepth} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Rect x={sofaWidth / 2} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Line points={[-sofaWidth / 3, -sofaHeight / 2, -sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-            <Line points={[sofaWidth / 3, -sofaHeight / 2, sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
-          </Group>
-        )
-      }
-    } else if (furnitureTypeValue === 'armchair') {
-      // Кресла - реалистичная форма
-      const chairWidth = 12 * scale
-      const chairHeight = 12 * scale
-      const chairDepth = 2 * scale
-      
-      if (shapeValue === 'curved') {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-chairWidth / 2} y={-chairHeight / 2} width={chairWidth} height={chairHeight} fill="#FF9800" stroke="#F57C00" strokeWidth={1.5 * scale} cornerRadius={chairHeight / 2} shadowBlur={3 * scale} shadowColor="rgba(0, 0, 0, 0.3)" />
-            <Rect x={-chairWidth / 2} y={-chairHeight / 2 - chairDepth * 2} width={chairWidth} height={chairDepth * 2} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={chairDepth} />
-            <Rect x={-chairWidth / 2 - chairDepth} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Rect x={chairWidth / 2} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-          </Group>
-        )
-      } else {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-chairWidth / 2} y={-chairHeight / 2} width={chairWidth} height={chairHeight} fill="#FF9800" stroke="#F57C00" strokeWidth={1.5 * scale} cornerRadius={2 * scale} shadowBlur={3 * scale} shadowColor="rgba(0, 0, 0, 0.3)" />
-            <Rect x={-chairWidth / 2} y={-chairHeight / 2 - chairDepth * 2.5} width={chairWidth} height={chairDepth * 2.5} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={-chairWidth / 2 - chairDepth} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Rect x={chairWidth / 2} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
-            <Rect x={-chairWidth / 2 + 1 * scale} y={-chairHeight / 2 + 1 * scale} width={chairWidth - 2 * scale} height={chairHeight - 2 * scale} fill="rgba(255, 255, 255, 0.1)" cornerRadius={1 * scale} />
-          </Group>
-        )
-      }
-    } else {
-      // Стулья - реалистичная форма
-      const chairWidth = 10 * scale
-      const chairHeight = 10 * scale
-      const chairBackHeight = 6 * scale
-      
-      if (shapeValue === 'round') {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Circle x={0} y={0} radius={chairWidth / 2} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} shadowBlur={3 * scale} shadowColor="rgba(46, 125, 50, 0.4)" />
-            <Circle x={0} y={0} radius={chairWidth / 2 - 2 * scale} fill="#66BB6A" />
-            <Circle x={-chairWidth / 3} y={chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
-            <Circle x={chairWidth / 3} y={chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
-            <Circle x={-chairWidth / 3} y={-chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
-            <Circle x={chairWidth / 3} y={-chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
-          </Group>
-        )
-      } else {
-        return (
-          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
-            <Rect x={-chairWidth / 2} y={-chairHeight / 2} width={chairWidth} height={chairHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={2 * scale} shadowBlur={3 * scale} shadowColor="rgba(46, 125, 50, 0.4)" />
-            <Rect x={-chairWidth / 2 + 1 * scale} y={-chairHeight / 2 + 1 * scale} width={chairWidth - 2 * scale} height={chairHeight - 2 * scale} fill="#66BB6A" cornerRadius={1 * scale} />
-            <Rect x={-chairWidth / 2 + 2 * scale} y={-chairHeight / 2 - chairBackHeight} width={chairWidth - 4 * scale} height={chairBackHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
-            <Rect x={-chairWidth / 2 - 1 * scale} y={chairHeight / 2 - 2 * scale} width={2 * scale} height={2 * scale} fill="#2E7D32" />
-            <Rect x={chairWidth / 2 - 1 * scale} y={chairHeight / 2 - 2 * scale} width={2 * scale} height={2 * scale} fill="#2E7D32" />
-            <Rect x={-chairWidth / 2 - 1 * scale} y={-chairHeight / 2} width={2 * scale} height={2 * scale} fill="#2E7D32" />
-            <Rect x={chairWidth / 2 - 1 * scale} y={-chairHeight / 2} width={2 * scale} height={2 * scale} fill="#2E7D32" />
-          </Group>
-        )
-      }
-    }
-  }
+  // Используем FurnitureRenderer для рендеринга мебели
 
   const renderElement = (element: FloorPlanElement) => {
     const isSelected = element.id === selectedId || selectedIds.includes(element.id)
@@ -1502,13 +1378,16 @@ const FloorPlanEditor = ({
                       const seatX = Math.cos(angle) * seatRadius
                       const seatY = Math.sin(angle) * seatRadius
                       const rotation = pos.angle || 0
-                      return renderFurnitureItem(
-                        seatX,
-                        seatY,
-                        rotation,
-                        element.furnitureType,
-                        pos.shape,
-                        `circle-${i}`
+                      return (
+                        <FurnitureRenderer
+                          key={`circle-${i}`}
+                          x={seatX}
+                          y={seatY}
+                          rotation={rotation}
+                          furnitureType={element.furnitureType}
+                          shape={pos.shape}
+                          scale={1}
+                        />
                       )
                     })
                   : Array.from({ length: capacity }).map((_, i) => {
@@ -1516,13 +1395,16 @@ const FloorPlanEditor = ({
                       const seatRadius = radius + 18
                       const seatX = Math.cos(angle) * seatRadius
                       const seatY = Math.sin(angle) * seatRadius
-                      return renderFurnitureItem(
-                        seatX,
-                        seatY,
-                        0,
-                        element.furnitureType || 'chair',
-                        'straight',
-                        `circle-${i}`
+                      return (
+                        <FurnitureRenderer
+                          key={`circle-${i}`}
+                          x={seatX}
+                          y={seatY}
+                          rotation={0}
+                          furnitureType={element.furnitureType || 'chair'}
+                          shape="straight"
+                          scale={1}
+                        />
                       )
                     })
                 }
@@ -1604,13 +1486,16 @@ const FloorPlanEditor = ({
                           break
                       }
                       
-                      return renderFurnitureItem(
-                        seatX,
-                        seatY,
-                        rotation,
-                        element.furnitureType,
-                        pos.shape,
-                        `${pos.side}-${i}`
+                      return (
+                        <FurnitureRenderer
+                          key={`${pos.side}-${i}`}
+                          x={seatX}
+                          y={seatY}
+                          rotation={rotation}
+                          furnitureType={element.furnitureType}
+                          shape={pos.shape}
+                          scale={1}
+                        />
                       )
                     })
                   : Array.from({ length: 4 }).map((_, side) => {
@@ -1642,13 +1527,16 @@ const FloorPlanEditor = ({
                           rotation = 270
                         }
                         
-                        return renderFurnitureItem(
-                          seatX,
-                          seatY,
-                          rotation,
-                          element.furnitureType || 'chair',
-                          'straight',
-                          `${side}-${i}`
+                        return (
+                          <FurnitureRenderer
+                            key={`${side}-${i}`}
+                            x={seatX}
+                            y={seatY}
+                            rotation={rotation}
+                            furnitureType={element.furnitureType || 'chair'}
+                            shape="straight"
+                            scale={1}
+                          />
                         )
                       })
                     })
@@ -1702,13 +1590,16 @@ const FloorPlanEditor = ({
                       const seatX = Math.cos(angle) * seatRadiusX
                       const seatY = Math.sin(angle) * seatRadiusY
                       const rotation = pos.angle || 0
-                      return renderFurnitureItem(
-                        seatX,
-                        seatY,
-                        rotation,
-                        element.furnitureType,
-                        pos.shape,
-                        `oval-${i}`
+                      return (
+                        <FurnitureRenderer
+                          key={`oval-${i}`}
+                          x={seatX}
+                          y={seatY}
+                          rotation={rotation}
+                          furnitureType={element.furnitureType}
+                          shape={pos.shape}
+                          scale={1}
+                        />
                       )
                     })
                   : Array.from({ length: capacity }).map((_, i) => {
@@ -1717,13 +1608,16 @@ const FloorPlanEditor = ({
                       const seatRadiusY = height / 2 + 18
                       const seatX = Math.cos(angle) * seatRadiusX
                       const seatY = Math.sin(angle) * seatRadiusY
-                      return renderFurnitureItem(
-                        seatX,
-                        seatY,
-                        0,
-                        element.furnitureType || 'chair',
-                        'straight',
-                        `oval-${i}`
+                      return (
+                        <FurnitureRenderer
+                          key={`oval-${i}`}
+                          x={seatX}
+                          y={seatY}
+                          rotation={0}
+                          furnitureType={element.furnitureType || 'chair'}
+                          shape="straight"
+                          scale={1}
+                        />
                       )
                     })
                 }
