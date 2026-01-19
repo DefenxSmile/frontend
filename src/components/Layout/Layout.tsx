@@ -3,6 +3,7 @@ import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/mater
 import { Link, useLocation } from 'react-router-dom'
 import { Brightness4, Brightness7 } from '@mui/icons-material'
 import { useTheme } from '../../contexts/ThemeContext'
+import logoIcon from '../../assets/logo-icon.svg'
 import './Layout.scss'
 
 interface LayoutProps {
@@ -26,9 +27,53 @@ const Layout = ({ children }: LayoutProps) => {
         }}
       >
         <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            TableBook
-          </Typography>
+          <Box 
+            component={Link}
+            to="/"
+            sx={{ 
+              flexGrow: 1, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5,
+              textDecoration: 'none',
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.9,
+              },
+              transition: 'opacity 0.2s ease',
+            }}
+          >
+            <Box
+              component="img"
+              src={logoIcon}
+              alt="TableBook Logo"
+              sx={{
+                width: { xs: 34, sm: 42 },
+                height: { xs: 34, sm: 42 },
+                filter: 'brightness(0) invert(1)', // Делает иконку белой
+                transition: 'transform 0.2s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
+              }}
+            />
+            <Typography 
+              variant="h6" 
+              component="div" 
+              sx={{ 
+                fontWeight: 700,
+                color: '#FFFFFF',
+                fontSize: { xs: '1.1rem', sm: '1.35rem' },
+                letterSpacing: '0.5px',
+                background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              TableBook
+            </Typography>
+          </Box>
           <Button
             color="inherit"
             component={Link}

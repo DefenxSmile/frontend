@@ -19,6 +19,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Divider,
 } from '@mui/material'
 import {
   Edit as EditIcon,
@@ -26,15 +27,19 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   MoreVert as MoreVertIcon,
+  Construction as ConstructionIcon,
 } from '@mui/icons-material'
-import { getClients, deleteClient, initializeMockData, type StoredClient } from '../../utils/storage'
-import './AdminClientsPage.scss'
+import { getClients, deleteClient, initializeMockData, type StoredClient } from '../../../utils/storage'
+import ClientFormDrawer from '../../../components/ClientFormDrawer/ClientFormDrawer'
+import './index.scss'
 
 const AdminClientsPage = () => {
   const navigate = useNavigate()
   const [clients, setClients] = useState<StoredClient[]>([])
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingClientId, setEditingClientId] = useState<string | null>(null)
 
   useEffect(() => {
     initializeMockData()
@@ -53,7 +58,14 @@ const AdminClientsPage = () => {
 
   const isMenuOpen = Boolean(anchorEl)
 
-  const handleEdit = () => {
+  const handleCreatePlan = () => {
+    if (selectedClientId) {
+      navigate(`/admin/editor/${selectedClientId}`)
+      handleMenuClose()
+    }
+  }
+
+  const handleEditPlan = () => {
     if (selectedClientId) {
       navigate(`/admin/editor/${selectedClientId}`)
       handleMenuClose()
@@ -63,6 +75,14 @@ const AdminClientsPage = () => {
   const handleView = () => {
     if (selectedClientId) {
       navigate(`/admin/viewer/${selectedClientId}`)
+      handleMenuClose()
+    }
+  }
+
+  const handleEditClient = () => {
+    if (selectedClientId) {
+      setEditingClientId(selectedClientId)
+      setDrawerOpen(true)
       handleMenuClose()
     }
   }
@@ -78,8 +98,17 @@ const AdminClientsPage = () => {
   }
 
   const handleAddNew = () => {
-    const newId = `client-${Date.now()}`
-    navigate(`/admin/editor/${newId}?new=true`)
+    setEditingClientId(null)
+    setDrawerOpen(true)
+  }
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false)
+    setEditingClientId(null)
+  }
+
+  const handleClientSave = () => {
+    setClients(getClients())
   }
 
   return (
@@ -227,25 +256,45 @@ const AdminClientsPage = () => {
           PaperProps={{
             sx: {
               mt: 1,
-              minWidth: 180,
+              minWidth: 200,
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
             },
           }}
         >
-          <MenuItem onClick={handleEdit}>
+          <MenuItem onClick={handleEditClient}>
             <ListItemIcon>
               <EditIcon fontSize="small" sx={{ color: '#FF6B01' }} />
             </ListItemIcon>
-            <ListItemText>Редактировать план</ListItemText>
+            <ListItemText>Редактировать клиента</ListItemText>
           </MenuItem>
-          {selectedClientId && clients.find((c) => c.id === selectedClientId)?.hasFloorPlan && (
-            <MenuItem onClick={handleView}>
-              <ListItemIcon>
-                <ViewIcon fontSize="small" sx={{ color: '#2196F3' }} />
-              </ListItemIcon>
-              <ListItemText>Просмотреть план</ListItemText>
-            </MenuItem>
+          {selectedClientId && (
+            <>
+              {clients.find((c) => c.id === selectedClientId)?.hasFloorPlan ? (
+                <>
+                  <MenuItem onClick={handleEditPlan}>
+                    <ListItemIcon>
+                      <ConstructionIcon fontSize="small" sx={{ color: '#9C27B0' }} />
+                    </ListItemIcon>
+                    <ListItemText>Редактировать план</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={handleView}>
+                    <ListItemIcon>
+                      <ViewIcon fontSize="small" sx={{ color: '#2196F3' }} />
+                    </ListItemIcon>
+                    <ListItemText>Просмотреть план</ListItemText>
+                  </MenuItem>
+                </>
+              ) : (
+                <MenuItem onClick={handleCreatePlan}>
+                  <ListItemIcon>
+                    <ConstructionIcon fontSize="small" sx={{ color: '#4CAF50' }} />
+                  </ListItemIcon>
+                  <ListItemText>Создать план</ListItemText>
+                </MenuItem>
+              )}
+            </>
           )}
+          <Divider sx={{ my: 0.5 }} />
           <MenuItem onClick={handleDelete} sx={{ color: '#F44336' }}>
             <ListItemIcon>
               <DeleteIcon fontSize="small" sx={{ color: '#F44336' }} />
@@ -253,6 +302,14 @@ const AdminClientsPage = () => {
             <ListItemText>Удалить</ListItemText>
           </MenuItem>
         </Menu>
+
+        {/* Drawer для добавления/редактирования клиента */}
+        <ClientFormDrawer
+          open={drawerOpen}
+          onClose={handleDrawerClose}
+          clientId={editingClientId}
+          onSave={handleClientSave}
+        />
       </Container>
     </Box>
   )

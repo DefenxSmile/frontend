@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Container, Typography, Paper, Button } from '@mui/material'
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon } from '@mui/icons-material'
-import FloorPlanViewer from '../../components/FloorPlanViewer/FloorPlanViewer'
-import { getClient, getFloorPlanByClientId } from '../../utils/storage'
-import type { FloorPlanData } from '../../types/floorPlan'
-import './AdminViewerPage.scss'
+import FloorPlanViewer from '../../../components/FloorPlanViewer/FloorPlanViewer'
+import { getClient, getFloorPlanByClientId } from '../../../utils/storage'
+import type { FloorPlanData } from '../../../types/floorPlan'
+import './index.scss'
 
 const AdminViewerPage = () => {
   const { clientId } = useParams<{ clientId: string }>()

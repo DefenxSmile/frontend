@@ -1,9 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout/Layout'
 import HomePage from './pages/HomePage/HomePage'
-import AdminClientsPage from './pages/AdminPage/AdminClientsPage'
-import AdminEditorPage from './pages/AdminPage/AdminEditorPage'
-import AdminViewerPage from './pages/AdminPage/AdminViewerPage'
+import { AdminClientsPage, AdminEditorPage, AdminViewerPage } from './pages/AdminPage'
 import UserPage from './pages/UserPage/UserPage'
 import './App.scss'
 
