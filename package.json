@@ -23,7 +23,6 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-konva": "^19.2.1",
-    "react-planner": "^2.0.6",
     "react-router-dom": "^7.12.0",
     "react-selectable-fast": "^3.4.0",
     "sass": "^1.97.2",
