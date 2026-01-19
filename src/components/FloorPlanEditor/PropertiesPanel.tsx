@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Box, Paper, Typography, TextField, Divider, IconButton, Tooltip } from '@mui/material'
+import { Box, Paper, Typography, TextField, Divider, IconButton, Tooltip, Button } from '@mui/material'
 import { Delete as DeleteIcon, ContentCopy as DuplicateIcon } from '@mui/icons-material'
 import type { FloorPlanElement } from '../../types/floorPlan'
-import TableShapeSelector from './TableShapeSelector'
 import './PropertiesPanel.scss'
 
 interface PropertiesPanelProps {
@@ -10,9 +9,10 @@ interface PropertiesPanelProps {
   onUpdate: (id: string, updates: Partial<FloorPlanElement>) => void
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
+  onEditInConstructor?: (id: string) => void // Для редактирования стола в конструкторе
 }
 
-const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate }: PropertiesPanelProps) => {
+const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInConstructor }: PropertiesPanelProps) => {
   const [localValues, setLocalValues] = useState<Partial<FloorPlanElement>>({})
 
   useEffect(() => {
@@ -86,27 +86,22 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate }: Propertie
           sx={{ mb: 2 }}
         />
 
-        {/* Для столов - выбор формы */}
-        {element.type === 'table' && (
-          <>
-            <TableShapeSelector
-              selectedShape={localValues.tableShape || element.tableShape || 'circle'}
-              onShapeChange={(shape) => {
-                handleChange('tableShape', shape)
-                onUpdate(element.id, { tableShape: shape })
-              }}
-            />
-            <TextField
+        {/* Для столов - кнопка редактирования в конструкторе */}
+        {element.type === 'table' && onEditInConstructor && (
+          <Box sx={{ mb: 2 }}>
+            <Button
               fullWidth
-              label="Вместимость"
-              type="number"
-              value={localValues.capacity || ''}
-              onChange={(e) => handleChange('capacity', parseInt(e.target.value) || 0)}
-              onBlur={() => handleBlur('capacity')}
-              size="small"
-              sx={{ mt: 2 }}
-            />
-          </>
+              variant="contained"
+              onClick={() => onEditInConstructor(element.id)}
+              sx={{
+                backgroundColor: '#4CAF50',
+                '&:hover': { backgroundColor: '#45a049' },
+                textTransform: 'none',
+              }}
+            >
+              Редактировать в конструкторе
+            </Button>
+          </Box>
         )}
 
         {/* Позиция */}

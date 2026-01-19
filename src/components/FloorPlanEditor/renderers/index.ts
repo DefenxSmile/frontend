@@ -1,0 +1,2 @@
+export { FurnitureRenderer } from './FurnitureRenderer'
+

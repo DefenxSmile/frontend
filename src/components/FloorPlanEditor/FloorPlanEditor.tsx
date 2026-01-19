@@ -44,6 +44,7 @@ import { useSaveFloorPlan } from '../../hooks/useFloorPlan'
 import type { FloorPlanElement, FloorPlanData, TableShape, Floor } from '../../types/floorPlan'
 import PropertiesPanel from './PropertiesPanel'
 import TableShapeSelector from './TableShapeSelector'
+import TableConstructorModal, { type TableConfig } from './TableConstructorModal'
 import './FloorPlanEditor.scss'
 
 interface FloorPlanEditorProps {
@@ -75,6 +76,8 @@ const FloorPlanEditor = ({
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [isSpacePressed, setIsSpacePressed] = useState(false) // Для отслеживания Space
   const [tableNumber, setTableNumber] = useState(1)
+  const [draggedTool, setDraggedTool] = useState<ToolType | null>(null) // Инструмент, который перетаскивается
+  const [isDraggingTool, setIsDraggingTool] = useState(false) // Флаг для отслеживания перетаскивания инструмента
   // Этажи
   const [floors, setFloors] = useState<Floor[]>([
     { id: 'floor-1', name: 'Первый этаж', level: 1, elements: [] },
@@ -117,6 +120,8 @@ const FloorPlanEditor = ({
   const [showJsonDialog, setShowJsonDialog] = useState(false)
   const [jsonToSave, setJsonToSave] = useState<string>('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [tableConstructorOpen, setTableConstructorOpen] = useState(false)
+  const [editingTableId, setEditingTableId] = useState<string | null>(null) // ID редактируемого стола
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number
     mouseY: number
@@ -145,6 +150,8 @@ const FloorPlanEditor = ({
   const layerRef = useRef<any>(null)
   const transformerLayerRef = useRef<any>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const canvasWrapperRef = useRef<HTMLDivElement>(null)
+  const pendingTablePosition = useRef<{ x: number; y: number } | null>(null)
   const [stageSize, setStageSize] = useState({ width: 1200, height: 800 })
   const saveMutation = useSaveFloorPlan()
 
@@ -313,8 +320,8 @@ const FloorPlanEditor = ({
 
   // Обработка начала выделения зоны
   const handleSelectionStart = (e: any) => {
-    // Не начинаем выделение если панорамируем или рисуем стену
-    if (isDrawingWall || isPanning || isSpacePressed) return
+    // Не начинаем выделение если панорамируем, рисуем стену или перетаскиваем инструмент
+    if (isDrawingWall || isPanning || isSpacePressed || isDraggingTool) return
     
     // Проверяем что кликнули на пустое место
     const stage = e.target.getStage()
@@ -331,6 +338,9 @@ const FloorPlanEditor = ({
     setIsSelecting(true)
     setSelectionStart({ x, y })
     setSelectionBox({ x, y, width: 0, height: 0 })
+    
+    // Сбрасываем выделение перед началом нового
+    handleSelect(null)
     
     // Предотвращаем всплытие события
     if (e.evt) {
@@ -547,7 +557,9 @@ const FloorPlanEditor = ({
 
       switch (selectedTool) {
         case 'table':
-          addTable(x, y)
+          // Для стола открываем конструктор и сохраняем позицию для добавления после закрытия
+          pendingTablePosition.current = { x, y }
+          setTableConstructorOpen(true)
           break
         case 'door':
           addDoor(x, y)
@@ -613,12 +625,122 @@ const FloorPlanEditor = ({
       capacity: 4,
       zIndex: 4, // Столы поверх всего
     }
-    setElements((prev) => [...prev, newElement])
+    const updatedElements = [...elements, newElement]
+    updateCurrentFloorElements(updatedElements)
     setTableNumber((prev) => prev + 1)
     handleSelect(newElement.id)
     setSelectedTool('select')
   }
 
+  const addTableFromConstructor = (x: number, y: number, config: TableConfig) => {
+    let elementProps: Partial<FloorPlanElement> = {}
+    
+    switch (config.shape) {
+      case 'circle':
+        const radius = config.radius || Math.min(config.width, config.height) / 2
+        elementProps = {
+          radius: radius,
+          x: snapToGridValue(x - radius),
+          y: snapToGridValue(y - radius),
+        }
+        break
+      case 'square':
+        elementProps = {
+          width: config.width,
+          height: config.height,
+          x: snapToGridValue(x - config.width / 2),
+          y: snapToGridValue(y - config.height / 2),
+        }
+        break
+      case 'rectangle':
+        elementProps = {
+          width: config.width,
+          height: config.height,
+          x: snapToGridValue(x - config.width / 2),
+          y: snapToGridValue(y - config.height / 2),
+        }
+        break
+      case 'oval':
+        elementProps = {
+          width: config.width,
+          height: config.height,
+          x: snapToGridValue(x - config.width / 2),
+          y: snapToGridValue(y - config.height / 2),
+        }
+        break
+    }
+
+    const newElement: FloorPlanElement = {
+      id: `table-${Date.now()}`,
+      type: 'table',
+      x: elementProps.x || 0,
+      y: elementProps.y || 0,
+      ...elementProps,
+      fill: '#A8D5BA',
+      stroke: '#4CAF50',
+      strokeWidth: 2,
+      label: config.label || `Стол ${tableNumber}`,
+      tableShape: config.shape,
+      capacity: config.furniturePositions?.length || config.capacity,
+      rotation: config.rotation,
+      furnitureType: config.furnitureType,
+      showFurniture: config.showFurniture,
+      furniturePositions: config.furniturePositions,
+      zIndex: 4,
+    }
+    const updatedElements = [...elements, newElement]
+    updateCurrentFloorElements(updatedElements)
+    setTableNumber((prev) => prev + 1)
+    handleSelect(newElement.id)
+    setSelectedTool('select')
+  }
+
+  const handleTableConstructorSave = (config: TableConfig) => {
+    // Если редактируем существующий стол
+    if (editingTableId) {
+      const existingElement = elements.find(el => el.id === editingTableId)
+      if (existingElement) {
+        const updatedElement: FloorPlanElement = {
+          ...existingElement,
+          tableShape: config.shape,
+          width: config.width,
+          height: config.height,
+          radius: config.radius,
+          rotation: config.rotation,
+          label: config.label,
+          capacity: config.furniturePositions?.length || config.capacity,
+          furnitureType: config.furnitureType,
+          showFurniture: config.showFurniture,
+          furniturePositions: config.furniturePositions,
+        }
+        handleUpdate(editingTableId, updatedElement)
+        setEditingTableId(null)
+      }
+    } else {
+      // Создаем новый стол - используем сохраненную позицию или центр canvas
+      if (pendingTablePosition.current) {
+        addTableFromConstructor(pendingTablePosition.current.x, pendingTablePosition.current.y, config)
+        pendingTablePosition.current = null
+      } else if (stageRef.current) {
+        const stage = stageRef.current.getStage()
+        const stageWidth = stage.width()
+        const stageHeight = stage.height()
+        const centerX = (stageWidth / 2 - position.x) / scale
+        const centerY = (stageHeight / 2 - position.y) / scale
+        addTableFromConstructor(centerX, centerY, config)
+      }
+    }
+  }
+
+  const handleEditTableInConstructor = (tableId: string) => {
+    const table = elements.find(el => el.id === tableId && el.type === 'table')
+    if (table) {
+      setEditingTableId(tableId)
+      setTableConstructorOpen(true)
+      setDrawerOpen(false)
+      setContextMenu(null)
+    }
+  }
 
   const addDoor = (x: number, y: number) => {
     const newElement: FloorPlanElement = {
@@ -659,6 +781,86 @@ const FloorPlanEditor = ({
     handleSelect(newElement.id)
     setSelectedTool('select')
   }
+
+  // Обработка drag-and-drop через события мыши (для Konva)
+  useEffect(() => {
+    const handleMouseMove = () => {
+      if (isDraggingTool && draggedTool && draggedTool !== 'select' && draggedTool !== 'wall') {
+        // Обновляем курсор при перетаскивании
+        if (canvasWrapperRef.current) {
+          canvasWrapperRef.current.style.cursor = 'crosshair'
+        }
+      }
+    }
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (isDraggingTool && draggedTool && draggedTool !== 'select' && draggedTool !== 'wall' && stageRef.current) {
+        const stage = stageRef.current
+        const container = canvasWrapperRef.current
+        if (!container || !stage) {
+          setIsDraggingTool(false)
+          setDraggedTool(null)
+          if (canvasWrapperRef.current) {
+            canvasWrapperRef.current.style.cursor = ''
+          }
+          return
+        }
+        
+        // Проверяем что клик был внутри canvas
+        const stageContainer = stage.getStage().getContainer()
+        const stageRect = stageContainer.getBoundingClientRect()
+        
+        if (
+          e.clientX >= stageRect.left &&
+          e.clientX <= stageRect.right &&
+          e.clientY >= stageRect.top &&
+          e.clientY <= stageRect.bottom
+        ) {
+          // Получаем позицию указателя относительно stage с учетом масштаба и позиции
+          // Используем координаты мыши относительно stage контейнера
+          const stageX = e.clientX - stageRect.left
+          const stageY = e.clientY - stageRect.top
+          
+          // Преобразуем в координаты stage с учетом масштаба и позиции
+          const relativeX = (stageX - position.x) / scale
+          const relativeY = (stageY - position.y) / scale
+          const snappedX = snapToGridValue(relativeX)
+          const snappedY = snapToGridValue(relativeY)
+          
+          switch (draggedTool) {
+            case 'table':
+              addTable(snappedX, snappedY)
+              break
+            case 'door':
+              addDoor(snappedX, snappedY)
+              break
+            case 'window':
+              addWindow(snappedX, snappedY)
+              break
+          }
+          
+          // Автоматически переключаемся на инструмент выбора после добавления
+          setSelectedTool('select')
+        }
+        
+        setIsDraggingTool(false)
+        setDraggedTool(null)
+        if (canvasWrapperRef.current) {
+          canvasWrapperRef.current.style.cursor = ''
+        }
+      }
+    }
+
+    if (isDraggingTool) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDraggingTool, draggedTool, scale, position, snapToGridValue, addTable, addDoor, addWindow])
 
   const handleDelete = (id?: string) => {
     const idToDelete = id || selectedId
@@ -1056,6 +1258,129 @@ const FloorPlanEditor = ({
     return lines
   }
 
+  // Функция для рендеринга детальной мебели (как в TableConstructorModal)
+  const renderFurnitureItem = (
+    x: number,
+    y: number,
+    rotation: number,
+    furnitureType: 'chair' | 'sofa' | 'armchair' | undefined,
+    shape: 'straight' | 'curved' | 'l-shaped' | 'l-shaped-reverse' | 'round' | undefined,
+    key: string | number
+  ) => {
+    const scale = 1 // Масштаб для основного конструктора
+    const furnitureTypeValue = furnitureType || 'chair'
+    const shapeValue = shape || 'straight'
+
+    if (furnitureTypeValue === 'sofa') {
+      // Диваны - реалистичная визуализация
+      const sofaWidth = 28 * scale
+      const sofaHeight = 14 * scale
+      const sofaDepth = 3 * scale
+      
+      if (shapeValue === 'l-shaped') {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={sofaWidth / 2 - 2 * scale} y={-sofaHeight / 2} width={sofaHeight + 2 * scale} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
+            <Rect x={sofaWidth / 2 - 2 * scale} y={-sofaHeight / 2 - sofaDepth} width={sofaHeight + 2 * scale} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={sofaWidth / 2 + sofaHeight - 2 * scale} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Line points={[-sofaWidth / 4, -sofaHeight / 2, -sofaWidth / 4, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+            <Line points={[sofaWidth / 4, -sofaHeight / 2, sofaWidth / 4, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+          </Group>
+        )
+      } else if (shapeValue === 'l-shaped-reverse') {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={-sofaWidth / 2 - sofaHeight} y={-sofaHeight / 2} width={sofaHeight} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
+            <Rect x={-sofaWidth / 2 - sofaHeight} y={-sofaHeight / 2 - sofaDepth} width={sofaHeight} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={-sofaWidth / 2 - sofaHeight - sofaDepth} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Line points={[-sofaWidth / 4, -sofaHeight / 2, -sofaWidth / 4, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+          </Group>
+        )
+      } else if (shapeValue === 'curved') {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={sofaHeight / 2} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={sofaDepth / 2} />
+            <Line points={[-sofaWidth / 3, -sofaHeight / 2, -sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+            <Line points={[sofaWidth / 3, -sofaHeight / 2, sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+          </Group>
+        )
+      } else {
+        // Прямой диван
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2} width={sofaWidth} height={sofaHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={3 * scale} shadowBlur={4 * scale} shadowColor="rgba(0, 0, 0, 0.25)" />
+            <Rect x={-sofaWidth / 2} y={-sofaHeight / 2 - sofaDepth} width={sofaWidth} height={sofaDepth} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={-sofaWidth / 2 - sofaDepth} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Rect x={sofaWidth / 2} y={-sofaHeight / 2} width={sofaDepth} height={sofaHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Line points={[-sofaWidth / 3, -sofaHeight / 2, -sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+            <Line points={[sofaWidth / 3, -sofaHeight / 2, sofaWidth / 3, sofaHeight / 2]} stroke="#66BB6A" strokeWidth={1 * scale} dash={[2, 2]} />
+          </Group>
+        )
+      }
+    } else if (furnitureTypeValue === 'armchair') {
+      // Кресла - реалистичная форма
+      const chairWidth = 12 * scale
+      const chairHeight = 12 * scale
+      const chairDepth = 2 * scale
+      
+      if (shapeValue === 'curved') {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-chairWidth / 2} y={-chairHeight / 2} width={chairWidth} height={chairHeight} fill="#FF9800" stroke="#F57C00" strokeWidth={1.5 * scale} cornerRadius={chairHeight / 2} shadowBlur={3 * scale} shadowColor="rgba(0, 0, 0, 0.3)" />
+            <Rect x={-chairWidth / 2} y={-chairHeight / 2 - chairDepth * 2} width={chairWidth} height={chairDepth * 2} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={chairDepth} />
+            <Rect x={-chairWidth / 2 - chairDepth} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Rect x={chairWidth / 2} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+          </Group>
+        )
+      } else {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-chairWidth / 2} y={-chairHeight / 2} width={chairWidth} height={chairHeight} fill="#FF9800" stroke="#F57C00" strokeWidth={1.5 * scale} cornerRadius={2 * scale} shadowBlur={3 * scale} shadowColor="rgba(0, 0, 0, 0.3)" />
+            <Rect x={-chairWidth / 2} y={-chairHeight / 2 - chairDepth * 2.5} width={chairWidth} height={chairDepth * 2.5} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={-chairWidth / 2 - chairDepth} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Rect x={chairWidth / 2} y={-chairHeight / 2} width={chairDepth} height={chairHeight} fill="#F57C00" stroke="#E65100" strokeWidth={1 * scale} cornerRadius={1 * scale} />
+            <Rect x={-chairWidth / 2 + 1 * scale} y={-chairHeight / 2 + 1 * scale} width={chairWidth - 2 * scale} height={chairHeight - 2 * scale} fill="rgba(255, 255, 255, 0.1)" cornerRadius={1 * scale} />
+          </Group>
+        )
+      }
+    } else {
+      // Стулья - реалистичная форма
+      const chairWidth = 10 * scale
+      const chairHeight = 10 * scale
+      const chairBackHeight = 6 * scale
+      
+      if (shapeValue === 'round') {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Circle x={0} y={0} radius={chairWidth / 2} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} shadowBlur={3 * scale} shadowColor="rgba(46, 125, 50, 0.4)" />
+            <Circle x={0} y={0} radius={chairWidth / 2 - 2 * scale} fill="#66BB6A" />
+            <Circle x={-chairWidth / 3} y={chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
+            <Circle x={chairWidth / 3} y={chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
+            <Circle x={-chairWidth / 3} y={-chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
+            <Circle x={chairWidth / 3} y={-chairWidth / 3} radius={1 * scale} fill="#2E7D32" />
+          </Group>
+        )
+      } else {
+        return (
+          <Group key={key} x={x} y={y} rotation={rotation} listening={false}>
+            <Rect x={-chairWidth / 2} y={-chairHeight / 2} width={chairWidth} height={chairHeight} fill="#4CAF50" stroke="#2E7D32" strokeWidth={1.5 * scale} cornerRadius={2 * scale} shadowBlur={3 * scale} shadowColor="rgba(46, 125, 50, 0.4)" />
+            <Rect x={-chairWidth / 2 + 1 * scale} y={-chairHeight / 2 + 1 * scale} width={chairWidth - 2 * scale} height={chairHeight - 2 * scale} fill="#66BB6A" cornerRadius={1 * scale} />
+            <Rect x={-chairWidth / 2 + 2 * scale} y={-chairHeight / 2 - chairBackHeight} width={chairWidth - 4 * scale} height={chairBackHeight} fill="#2E7D32" stroke="#1B5E20" strokeWidth={1 * scale} cornerRadius={2 * scale} />
+            <Rect x={-chairWidth / 2 - 1 * scale} y={chairHeight / 2 - 2 * scale} width={2 * scale} height={2 * scale} fill="#2E7D32" />
+            <Rect x={chairWidth / 2 - 1 * scale} y={chairHeight / 2 - 2 * scale} width={2 * scale} height={2 * scale} fill="#2E7D32" />
+            <Rect x={-chairWidth / 2 - 1 * scale} y={-chairHeight / 2} width={2 * scale} height={2 * scale} fill="#2E7D32" />
+            <Rect x={chairWidth / 2 - 1 * scale} y={-chairHeight / 2} width={2 * scale} height={2 * scale} fill="#2E7D32" />
+          </Group>
+        )
+      }
+    }
+  }
+
   const renderElement = (element: FloorPlanElement) => {
     const isSelected = element.id === selectedId || selectedIds.includes(element.id)
     const commonProps = {
@@ -1168,42 +1493,39 @@ const FloorPlanEditor = ({
                   fill="rgba(76, 175, 80, 0.05)"
                   listening={false}
                 />
-                {/* Места вокруг стола - улучшенный дизайн */}
-                {Array.from({ length: capacity }).map((_, i) => {
-                  const angle = (i * 2 * Math.PI) / capacity - Math.PI / 2 // Начинаем сверху
-                  const seatRadius = radius + 18
-                  const seatX = Math.cos(angle) * seatRadius
-                  const seatY = Math.sin(angle) * seatRadius
-                  return (
-                    <Group key={i} listening={false}>
-                      {/* Тень места */}
-                      <Circle
-                        x={seatX + 1}
-                        y={seatY + 1}
-                        radius={7}
-                        fill="rgba(0, 0, 0, 0.1)"
-                      />
-                      {/* Основное место */}
-                      <Circle
-                        x={seatX}
-                        y={seatY}
-                        radius={7}
-                        fill="#4CAF50"
-                        stroke="#2E7D32"
-                        strokeWidth={1.5}
-                        shadowBlur={3}
-                        shadowColor="rgba(46, 125, 50, 0.4)"
-                      />
-                      {/* Внутренний круг места */}
-                      <Circle
-                        x={seatX}
-                        y={seatY}
-                        radius={4}
-                        fill="#66BB6A"
-                      />
-                    </Group>
-                  )
-                })}
+                {/* Места вокруг стола - детальная визуализация */}
+                {element.showFurniture !== false && element.furniturePositions && element.furniturePositions.length > 0
+                  ? element.furniturePositions.filter(pos => pos.side === 'circle').map((pos, i) => {
+                      const furniturePositions = element.furniturePositions || []
+                      const angle = pos.angle !== undefined ? (pos.angle * Math.PI) / 180 : (i * 2 * Math.PI) / furniturePositions.length - Math.PI / 2
+                      const seatRadius = radius + (pos.offset || 18)
+                      const seatX = Math.cos(angle) * seatRadius
+                      const seatY = Math.sin(angle) * seatRadius
+                      const rotation = pos.angle || 0
+                      return renderFurnitureItem(
+                        seatX,
+                        seatY,
+                        rotation,
+                        element.furnitureType,
+                        pos.shape,
+                        `circle-${i}`
+                      )
+                    })
+                  : Array.from({ length: capacity }).map((_, i) => {
+                      const angle = (i * 2 * Math.PI) / capacity - Math.PI / 2
+                      const seatRadius = radius + 18
+                      const seatX = Math.cos(angle) * seatRadius
+                      const seatY = Math.sin(angle) * seatRadius
+                      return renderFurnitureItem(
+                        seatX,
+                        seatY,
+                        0,
+                        element.furnitureType || 'chair',
+                        'straight',
+                        `circle-${i}`
+                      )
+                    })
+                }
               </>
             )
             break
@@ -1245,66 +1567,92 @@ const FloorPlanEditor = ({
                   cornerRadius={tableShape === 'square' ? 2 : 6}
                   listening={false}
                 />
-                {/* Места вокруг стола - улучшенный дизайн */}
-                {Array.from({ length: 4 }).map((_, side) => {
-                  const seats = side === 3 ? capacity - seatsPerSide * 3 : seatsPerSide
-                  return Array.from({ length: seats }).map((_, i) => {
-                    let seatX = 0
-                    let seatY = 0
-                    const totalSeats = side === 3 ? capacity - seatsPerSide * 3 : seatsPerSide
-                    const spacing = totalSeats > 1 ? width / (totalSeats + 1) : width / 2
-                    const offset = (i + 1) * spacing - width / 2
-                    const seatOffset = 18
-                    
-                    if (side === 0) {
-                      // Верх
-                      seatX = offset
-                      seatY = -height / 2 - seatOffset
-                    } else if (side === 1) {
-                      // Право
-                      seatX = width / 2 + seatOffset
-                      seatY = offset
-                    } else if (side === 2) {
-                      // Низ
-                      seatX = offset
-                      seatY = height / 2 + seatOffset
-                    } else {
-                      // Лево
-                      seatX = -width / 2 - seatOffset
-                      seatY = offset
-                    }
-                    
-                    return (
-                      <Group key={`${side}-${i}`} listening={false}>
-                        {/* Тень места */}
-                        <Circle
-                          x={seatX + 1}
-                          y={seatY + 1}
-                          radius={7}
-                          fill="rgba(0, 0, 0, 0.1)"
-                        />
-                        {/* Основное место */}
-                        <Circle
-                          x={seatX}
-                          y={seatY}
-                          radius={7}
-                          fill="#4CAF50"
-                          stroke="#2E7D32"
-                          strokeWidth={1.5}
-                          shadowBlur={3}
-                          shadowColor="rgba(46, 125, 50, 0.4)"
-                        />
-                        {/* Внутренний круг места */}
-                        <Circle
-                          x={seatX}
-                          y={seatY}
-                          radius={4}
-                          fill="#66BB6A"
-                        />
-                      </Group>
-                    )
-                  })
-                })}
+                {/* Места вокруг стола - детальная визуализация */}
+                {element.showFurniture !== false && element.furniturePositions && element.furniturePositions.length > 0
+                  ? element.furniturePositions.filter(pos => pos.side !== 'circle').map((pos, i) => {
+                      const width = element.width || 60
+                      const height = element.height || 60
+                      const seatOffset = pos.offset || 18
+                      const sidePositions = element.furniturePositions?.filter(p => p.side === pos.side) || []
+                      const sideIndex = sidePositions.indexOf(pos)
+                      const totalOnSide = sidePositions.length
+                      
+                      let seatX = 0
+                      let seatY = 0
+                      let rotation = 0
+                      
+                      switch (pos.side) {
+                        case 'top':
+                          seatX = -width / 2 + ((sideIndex + 1) * width) / (totalOnSide + 1)
+                          seatY = -height / 2 - seatOffset
+                          rotation = 0
+                          break
+                        case 'right':
+                          seatX = width / 2 + seatOffset
+                          seatY = -height / 2 + ((sideIndex + 1) * height) / (totalOnSide + 1)
+                          rotation = 90
+                          break
+                        case 'bottom':
+                          seatX = -width / 2 + ((sideIndex + 1) * width) / (totalOnSide + 1)
+                          seatY = height / 2 + seatOffset
+                          rotation = 180
+                          break
+                        case 'left':
+                          seatX = -width / 2 - seatOffset
+                          seatY = -height / 2 + ((sideIndex + 1) * height) / (totalOnSide + 1)
+                          rotation = 270
+                          break
+                      }
+                      
+                      return renderFurnitureItem(
+                        seatX,
+                        seatY,
+                        rotation,
+                        element.furnitureType,
+                        pos.shape,
+                        `${pos.side}-${i}`
+                      )
+                    })
+                  : Array.from({ length: 4 }).map((_, side) => {
+                      const seats = side === 3 ? capacity - seatsPerSide * 3 : seatsPerSide
+                      return Array.from({ length: seats }).map((_, i) => {
+                        let seatX = 0
+                        let seatY = 0
+                        const totalSeats = side === 3 ? capacity - seatsPerSide * 3 : seatsPerSide
+                        const spacing = totalSeats > 1 ? width / (totalSeats + 1) : width / 2
+                        const offset = (i + 1) * spacing - width / 2
+                        const seatOffset = 18
+                        let rotation = 0
+                        
+                        if (side === 0) {
+                          seatX = offset
+                          seatY = -height / 2 - seatOffset
+                          rotation = 0
+                        } else if (side === 1) {
+                          seatX = width / 2 + seatOffset
+                          seatY = offset
+                          rotation = 90
+                        } else if (side === 2) {
+                          seatX = offset
+                          seatY = height / 2 + seatOffset
+                          rotation = 180
+                        } else {
+                          seatX = -width / 2 - seatOffset
+                          seatY = offset
+                          rotation = 270
+                        }
+                        
+                        return renderFurnitureItem(
+                          seatX,
+                          seatY,
+                          rotation,
+                          element.furnitureType || 'chair',
+                          'straight',
+                          `${side}-${i}`
+                        )
+                      })
+                    })
+                }
               </>
             )
             break
@@ -1344,43 +1692,41 @@ const FloorPlanEditor = ({
                   cornerRadius={Math.min(width - 8, height - 8) / 2}
                   listening={false}
                 />
-                {/* Места вокруг овального стола - улучшенный дизайн */}
-                {Array.from({ length: capacity }).map((_, i) => {
-                  const angle = (i * 2 * Math.PI) / capacity - Math.PI / 2 // Начинаем сверху
-                  const seatRadiusX = width / 2 + 18
-                  const seatRadiusY = height / 2 + 18
-                  const seatX = Math.cos(angle) * seatRadiusX
-                  const seatY = Math.sin(angle) * seatRadiusY
-                  return (
-                    <Group key={i} listening={false}>
-                      {/* Тень места */}
-                      <Circle
-                        x={seatX + 1}
-                        y={seatY + 1}
-                        radius={7}
-                        fill="rgba(0, 0, 0, 0.1)"
-                      />
-                      {/* Основное место */}
-                      <Circle
-                        x={seatX}
-                        y={seatY}
-                        radius={7}
-                        fill="#4CAF50"
-                        stroke="#2E7D32"
-                        strokeWidth={1.5}
-                        shadowBlur={3}
-                        shadowColor="rgba(46, 125, 50, 0.4)"
-                      />
-                      {/* Внутренний круг места */}
-                      <Circle
-                        x={seatX}
-                        y={seatY}
-                        radius={4}
-                        fill="#66BB6A"
-                      />
-                    </Group>
-                  )
-                })}
+                {/* Места вокруг овального стола - детальная визуализация */}
+                {element.showFurniture !== false && element.furniturePositions && element.furniturePositions.length > 0
+                  ? element.furniturePositions.filter(pos => pos.side === 'circle').map((pos, i) => {
+                      const seatRadiusX = width / 2 + (pos.offset || 18)
+                      const seatRadiusY = height / 2 + (pos.offset || 18)
+                      const furniturePositions = element.furniturePositions || []
+                      const angle = pos.angle !== undefined ? (pos.angle * Math.PI) / 180 : (i * 2 * Math.PI) / furniturePositions.length - Math.PI / 2
+                      const seatX = Math.cos(angle) * seatRadiusX
+                      const seatY = Math.sin(angle) * seatRadiusY
+                      const rotation = pos.angle || 0
+                      return renderFurnitureItem(
+                        seatX,
+                        seatY,
+                        rotation,
+                        element.furnitureType,
+                        pos.shape,
+                        `oval-${i}`
+                      )
+                    })
+                  : Array.from({ length: capacity }).map((_, i) => {
+                      const angle = (i * 2 * Math.PI) / capacity - Math.PI / 2
+                      const seatRadiusX = width / 2 + 18
+                      const seatRadiusY = height / 2 + 18
+                      const seatX = Math.cos(angle) * seatRadiusX
+                      const seatY = Math.sin(angle) * seatRadiusY
+                      return renderFurnitureItem(
+                        seatX,
+                        seatY,
+                        0,
+                        element.furnitureType || 'chair',
+                        'straight',
+                        `oval-${i}`
+                      )
+                    })
+                }
               </>
             )
             break
@@ -1791,6 +2137,8 @@ const FloorPlanEditor = ({
               Панорамирование: Space + перетаскивание или средняя кнопка мыши
               <br />
               Выделение зоны: перетаскивание на пустом месте
+              <br />
+              Добавление элементов: перетащите инструмент на canvas или кликните
             </Typography>
             <Divider sx={{ my: 2 }} />
             
@@ -1799,13 +2147,34 @@ const FloorPlanEditor = ({
                 const Icon = tool.icon
                 const isActive = selectedTool === tool.id
                 return (
-                  <Tooltip key={tool.id} title={tool.label} placement="right">
+                  <Tooltip key={tool.id} title={`${tool.label}${tool.id !== 'select' ? ' (перетащите на canvas)' : ''}`} placement="right">
                     <Button
                       className={`floor-plan-editor__tool ${isActive ? 'active' : ''}`}
+                      onMouseDown={(e) => {
+                        if (tool.id === 'table') {
+                          // Для стола открываем конструктор
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setTableConstructorOpen(true)
+                          setSelectedTool('select')
+                        } else if (tool.id !== 'select' && tool.id !== 'wall') {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setDraggedTool(tool.id)
+                          setIsDraggingTool(true)
+                          // Изменяем курсор на canvas
+                          if (canvasWrapperRef.current) {
+                            canvasWrapperRef.current.style.cursor = 'crosshair'
+                          }
+                        }
+                      }}
                       onClick={() => {
-                        setSelectedTool(tool.id)
-                        if (tool.id !== 'select') {
-                          handleSelect(null)
+                        // Если не было перетаскивания, просто выбираем инструмент
+                        if (!isDraggingTool && tool.id !== 'table') {
+                          setSelectedTool(tool.id)
+                          if (tool.id !== 'select') {
+                            handleSelect(null)
+                          }
                         }
                       }}
                       variant={isActive ? 'contained' : 'outlined'}
@@ -1817,6 +2186,10 @@ const FloorPlanEditor = ({
                         borderColor: isActive ? tool.color : '#E8E8E8',
                         backgroundColor: isActive ? tool.color : 'transparent',
                         borderWidth: isActive ? 2 : 1,
+                        cursor: tool.id !== 'select' ? 'grab' : 'pointer',
+                        '&:active': {
+                          cursor: tool.id !== 'select' ? 'grabbing' : 'pointer',
+                        },
                         '&:hover': {
                           backgroundColor: isActive ? tool.color : '#FAFAFA',
                           borderColor: tool.color,
@@ -2089,7 +2462,14 @@ const FloorPlanEditor = ({
 
         {/* Основная область с канвасом */}
         <Box sx={{ flex: 1, display: 'flex', gap: 2, minWidth: 0 }}>
-        <Paper className="floor-plan-editor__canvas-wrapper" elevation={1}>
+        <Paper 
+          ref={canvasWrapperRef}
+          className="floor-plan-editor__canvas-wrapper" 
+          elevation={1}
+          sx={{
+            position: 'relative',
+          }}
+        >
           {/* Кнопка сохранения - справа вверху */}
           <Box
             sx={{
@@ -2248,14 +2628,27 @@ const FloorPlanEditor = ({
                   return
                 }
 
+                // Если перетаскиваем инструмент, обрабатываем drop
+                if (isDraggingTool && draggedTool && draggedTool !== 'select' && draggedTool !== 'wall') {
+                  e.evt.preventDefault()
+                  e.evt.stopPropagation()
+                  // Drop будет обработан в useEffect через mouseup
+                  return
+                }
+
                 // Если выбран инструмент выбора и кликнули на пустое место - начинаем выделение зоны
-                if (selectedTool === 'select' && clickedOnEmpty && !isSpacePressed) {
+                if (selectedTool === 'select' && clickedOnEmpty && !isSpacePressed && !isDraggingTool) {
                   e.evt.preventDefault()
                   e.evt.stopPropagation()
                   handleSelectionStart(e)
                 }
               }}
               onMouseMove={(e) => {
+                // Игнорируем движение мыши если перетаскиваем инструмент (обрабатывается в useEffect)
+                if (isDraggingTool) {
+                  return
+                }
+                
                 if (isPanning || (isSpacePressed && e.evt.buttons === 1)) {
                   handlePanMove(e)
                 } else if (isSelecting) {
@@ -2266,6 +2659,11 @@ const FloorPlanEditor = ({
                 }
               }}
               onMouseUp={(e) => {
+                // Игнорируем mouseup если перетаскиваем инструмент (обрабатывается в useEffect)
+                if (isDraggingTool) {
+                  return
+                }
+                
                 if (isPanning) {
                   handlePanEnd()
                 } else if (isSelecting) {
@@ -2276,6 +2674,12 @@ const FloorPlanEditor = ({
                   handleSelectionEnd()
                 } else if (isDrawingWall) {
                   handleWallMouseUp()
+                }
+              }}
+              onMouseLeave={() => {
+                // Если мышь покинула stage во время выделения, завершаем его
+                if (isSelecting) {
+                  handleSelectionEnd()
                 }
               }}
               onWheel={handleWheel}
@@ -2472,8 +2876,15 @@ const FloorPlanEditor = ({
         <MenuItem
           onClick={() => {
             if (contextMenu?.elementId) {
-              handleSelect(contextMenu.elementId)
-              setDrawerOpen(true)
+              const element = elements.find(el => el.id === contextMenu.elementId)
+              if (element?.type === 'table') {
+                // Для столов открываем конструктор
+                handleEditTableInConstructor(contextMenu.elementId)
+              } else {
+                // Для других элементов открываем обычный редактор
+                handleSelect(contextMenu.elementId)
+                setDrawerOpen(true)
+              }
               setContextMenu(null)
             }
           }}
@@ -2587,6 +2998,39 @@ const FloorPlanEditor = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Модалка конструктора стола */}
+      <TableConstructorModal
+        open={tableConstructorOpen}
+        onClose={() => {
+          setTableConstructorOpen(false)
+          setEditingTableId(null)
+          pendingTablePosition.current = null
+        }}
+        onSave={handleTableConstructorSave}
+        initialConfig={
+          editingTableId
+            ? (() => {
+                const table = elements.find(el => el.id === editingTableId && el.type === 'table')
+                if (table) {
+                  return {
+                    shape: table.tableShape || 'square',
+                    width: table.width || 60,
+                    height: table.height || 60,
+                    radius: table.radius,
+                    label: table.label || 'Стол',
+                    capacity: table.capacity || 4,
+                    rotation: table.rotation || 0,
+                    furnitureType: table.furnitureType || 'chair',
+                    showFurniture: table.showFurniture !== false,
+                    furniturePositions: table.furniturePositions || [],
+                  }
+                }
+                return undefined
+              })()
+            : undefined
+        }
+      />
     </Box>
   )
 }

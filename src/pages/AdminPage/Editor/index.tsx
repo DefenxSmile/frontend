@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Box } from '@mui/material'
-import FloorPlanEditor from '../../components/FloorPlanEditor/FloorPlanEditor'
+import FloorPlanEditor from '../../../components/FloorPlanEditor/FloorPlanEditor'
 import {
   getClient,
   getFloorPlanByClientId,
@@ -9,9 +9,9 @@ import {
   saveFloorPlan,
   type StoredClient,
   type StoredFloorPlan,
-} from '../../utils/storage'
-import type { FloorPlanData } from '../../types/floorPlan'
-import './AdminEditorPage.scss'
+} from '../../../utils/storage'
+import type { FloorPlanData } from '../../../types/floorPlan'
+import './index.scss'
 
 const AdminEditorPage = () => {
   const { clientId } = useParams<{ clientId: string }>()
