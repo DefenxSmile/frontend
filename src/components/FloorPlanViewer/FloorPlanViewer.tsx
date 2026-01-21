@@ -424,49 +424,28 @@ const FloorPlanViewer = ({
             <IconButton
               onClick={() => setShowGrid(!showGrid)}
               size="small"
-              sx={{
-                color: showGrid ? '#FF6B01' : '#666',
-                backgroundColor: showGrid ? 'rgba(255, 107, 1, 0.08)' : 'transparent',
-                '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.12)' },
-              }}
+              className={`${
+                showGrid
+                  ? 'text-[#FF6B01] bg-[rgba(255,107,1,0.08)] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.12)]'
+                  : 'text-[#666] bg-transparent hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.12)]'
+              }`}
             >
               <GridIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
 
-        {/* Переключение этажей */}
         {data.floors.length > 1 && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              zIndex: 10,
-              display: 'flex',
-              gap: 1,
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '8px',
-              padding: '8px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            }}
-          >
+          <Box className="absolute top-4 right-4 z-10 flex gap-2 bg-[rgba(255,255,255,0.95)] rounded-lg p-2 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
             {data.floors.map((floor) => (
               <Box
                 key={floor.id}
                 onClick={() => setCurrentFloorId(floor.id)}
-                sx={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  backgroundColor: currentFloorId === floor.id ? '#FF6B01' : 'transparent',
-                  color: currentFloorId === floor.id ? '#FFFFFF' : '#666',
-                  fontWeight: currentFloorId === floor.id ? 600 : 500,
-                  fontSize: '13px',
-                  '&:hover': {
-                    backgroundColor: currentFloorId === floor.id ? '#E55A00' : 'rgba(255, 107, 1, 0.08)',
-                  },
-                }}
+                className={`px-3 py-1.5 rounded-md cursor-pointer text-[13px] ${
+                  currentFloorId === floor.id
+                    ? 'bg-[#FF6B01] text-white font-semibold hover:bg-[#E55A00]'
+                    : 'bg-transparent text-[#666] font-medium hover:bg-[rgba(255,107,1,0.08)]'
+                }`}
               >
                 {floor.name}
               </Box>
@@ -491,10 +470,7 @@ const FloorPlanViewer = ({
                 y: e.target.y(),
               })
             }}
-            style={{
-              backgroundColor: '#FAFBFC',
-              cursor: 'grab',
-            }}
+            className="bg-[#FAFBFC] cursor-grab"
           >
             {/* Слой сетки (фон) */}
             <Layer>{renderGrid()}</Layer>

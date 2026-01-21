@@ -1,11 +1,90 @@
 .timeline-container {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  
-  // Улучшенная прокрутка для Firefox
-  scrollbar-width: thin;
-  
-  // Плавная прокрутка
   scroll-behavior: smooth;
+}
+
+.timeline-paper {
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.timeline-content {
+  padding: 16px 20px;
+
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.timeline-slot {
+  min-width: 110px;
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 0;
+
+  @media (min-width: 600px) {
+    min-width: 130px;
+    padding: 16px;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+  }
+
+  &--selected {
+    z-index: 1;
+    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.3);
+
+    &::before {
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+    }
+  }
+
+  &--fully-booked {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(&--fully-booked) {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+  }
+}
+
+.timeline-slot-time {
+  font-weight: 700;
+  color: #FFFFFF;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1;
+
+  @media (max-width: 600px) {
+    font-size: 0.875rem;
+  }
 }
 

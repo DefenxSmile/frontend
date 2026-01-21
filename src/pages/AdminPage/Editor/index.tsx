@@ -1,15 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { Box } from '@mui/material'
+import { Box, CircularProgress, Alert } from '@mui/material'
 import FloorPlanEditor from '../../../components/FloorPlanEditor/FloorPlanEditor'
-import {
-  getClient,
-  getFloorPlanByClientId,
-  saveClient,
-  saveFloorPlan,
-  type StoredClient,
-  type StoredFloorPlan,
-} from '../../../utils/storage'
+import { useVenue, useCreateVenue, useUpdateVenue } from '../../../domain/hooks'
 import type { FloorPlanData } from '../../../types/floorPlan'
 import './index.scss'
 
@@ -19,96 +11,109 @@ const AdminEditorPage = () => {
   const navigate = useNavigate()
   const isNew = searchParams.get('new') === 'true'
   
-  const [client, setClient] = useState<StoredClient | null>(null)
-  const [initialFloorPlan, setInitialFloorPlan] = useState<FloorPlanData | null>(null)
+  const venueId = clientId ? Number(clientId) : null
+  const { data: venue, isLoading, error } = useVenue(venueId || 0, { enabled: !isNew && !!venueId })
+  const createVenue = useCreateVenue()
+  const updateVenue = useUpdateVenue()
 
-  useEffect(() => {
-    if (!clientId) {
-      navigate('/admin')
-      return
+  const handleSave = async (floorPlanData: FloorPlanData, clientName: string, venueName: string) => {
+    const updatedFloorPlan: FloorPlanData = {
+      ...floorPlanData,
+      metadata: {
+        ...floorPlanData.metadata,
+        clientName,
+        venueName,
+        updatedAt: new Date().toISOString(),
+      },
     }
 
     if (isNew) {
-      // Создаем нового клиента
-      const newClient: StoredClient = {
-        id: clientId,
-        name: '',
-        venueName: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        hasFloorPlan: false,
-      }
-      setClient(newClient)
-    } else {
-      // Загружаем существующего клиента
-      const existingClient = getClient(clientId)
-      if (!existingClient) {
-        navigate('/admin')
-        return
-      }
-      setClient(existingClient)
-
-      // Загружаем план этажа если есть
-      if (existingClient.hasFloorPlan && existingClient.floorPlanId) {
-        const plan = getFloorPlanByClientId(clientId)
-        if (plan) {
-          setInitialFloorPlan(plan.data)
+      createVenue.mutate(
+        { floorPlan: updatedFloorPlan },
+        {
+          onSuccess: () => {
+            navigate('/admin')
+          },
         }
-      }
+      )
+    } else if (venueId) {
+      updateVenue.mutate(
+        { id: venueId, data: { floorPlan: updatedFloorPlan } },
+        {
+          onSuccess: () => {
+            navigate('/admin')
+          },
+        }
+      )
     }
-  }, [clientId, isNew, navigate])
-
-  const handleSave = async (floorPlanData: FloorPlanData, clientName: string, venueName: string) => {
-    if (!clientId) return
-
-    // Сохраняем/обновляем клиента
-    const clientToSave: StoredClient = {
-      id: clientId,
-      name: clientName,
-      venueName: venueName,
-      email: client?.email,
-      phone: client?.phone,
-      createdAt: client?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      hasFloorPlan: true,
-      floorPlanId: `plan-${clientId}`,
-    }
-    saveClient(clientToSave)
-
-    // Сохраняем план этажа
-    const planToSave: StoredFloorPlan = {
-      id: `plan-${clientId}`,
-      clientId: clientId,
-      data: floorPlanData,
-      createdAt: client?.hasFloorPlan ? (getFloorPlanByClientId(clientId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    saveFloorPlan(planToSave)
-
-    // Перенаправляем на страницу клиентов
-    navigate('/admin')
   }
+
+  if (isNew) {
+    return (
+      <Box 
+        className="admin-editor-page" 
+        sx={{ 
+          height: 'calc(100vh - 64px)', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          overflow: 'hidden',
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+          <FloorPlanEditor
+            clientName=""
+            venueName=""
+            initialFloorPlan={null}
+            onSave={handleSave}
+          />
+        </Box>
+      </Box>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error || !venue) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <Alert severity="error">Ошибка загрузки данных: {error?.message || 'Заведение не найдено'}</Alert>
+      </Box>
+    )
+  }
+
+  const client = venue.floorPlan.metadata
 
   if (!client) {
-    return null
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <Alert severity="error">Ошибка: метаданные заведения не найдены</Alert>
+      </Box>
+    )
   }
 
-      return (
-        <Box 
-          className="admin-editor-page" 
-          sx={{ 
-            height: 'calc(100vh - 64px)', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            overflow: 'hidden',
-            backgroundColor: 'background.default',
-          }}
-        >
+  return (
+    <Box 
+      className="admin-editor-page" 
+      sx={{ 
+        height: 'calc(100vh - 64px)', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden',
+        backgroundColor: 'background.default',
+      }}
+    >
       <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
         <FloorPlanEditor
-          clientName={client.name}
+          clientName={client.clientName}
           venueName={client.venueName}
-          initialFloorPlan={initialFloorPlan}
+          initialFloorPlan={venue.floorPlan}
           onSave={handleSave}
         />
       </Box>

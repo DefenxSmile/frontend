@@ -23,4 +23,13 @@
       background: #BDBDBD;
     }
   }
+
+  &__edit-button {
+    background-color: #4CAF50 !important;
+    text-transform: none !important;
+
+    &:hover {
+      background-color: #45a049 !important;
+    }
+  }
 }

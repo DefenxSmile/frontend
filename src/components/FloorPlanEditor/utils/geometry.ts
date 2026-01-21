@@ -1,17 +1,11 @@
 import type { FloorPlanElement } from '../../../types/floorPlan'
 
-/**
- * Вычисляет расстояние между двумя точками
- */
 export const getDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
   const dx = p2.x - p1.x
   const dy = p2.y - p1.y
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-/**
- * Проверяет, находится ли точка внутри прямоугольника
- */
 export const isPointInRect = (
   point: { x: number; y: number },
   rect: { x: number; y: number; width: number; height: number }
@@ -24,9 +18,6 @@ export const isPointInRect = (
   )
 }
 
-/**
- * Проверяет, находится ли точка внутри круга
- */
 export const isPointInCircle = (
   point: { x: number; y: number },
   circle: { x: number; y: number; radius: number }
@@ -36,9 +27,6 @@ export const isPointInCircle = (
   return dx * dx + dy * dy <= circle.radius * circle.radius
 }
 
-/**
- * Проверяет, пересекается ли прямоугольник с другим прямоугольником
- */
 export const isRectIntersecting = (
   rect1: { x: number; y: number; width: number; height: number },
   rect2: { x: number; y: number; width: number; height: number }
@@ -51,9 +39,6 @@ export const isRectIntersecting = (
   )
 }
 
-/**
- * Получает границы элемента (bounding box)
- */
 export const getElementBounds = (element: FloorPlanElement): {
   x: number
   y: number
@@ -77,9 +62,6 @@ export const getElementBounds = (element: FloorPlanElement): {
   }
 }
 
-/**
- * Проверяет, находится ли элемент внутри selection box
- */
 export const isElementInSelectionBox = (
   element: FloorPlanElement,
   selectionBox: { x: number; y: number; width: number; height: number }
@@ -88,9 +70,6 @@ export const isElementInSelectionBox = (
   return isRectIntersecting(bounds, selectionBox)
 }
 
-/**
- * Нормализует угол в диапазон 0-360
- */
 export const normalizeAngle = (angle: number): number => {
   while (angle < 0) angle += 360
   while (angle >= 360) angle -= 360

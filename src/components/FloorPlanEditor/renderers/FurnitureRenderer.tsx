@@ -9,9 +9,6 @@ interface FurnitureRendererProps {
   scale?: number
 }
 
-/**
- * Рендерер для детальной визуализации мебели
- */
 export const FurnitureRenderer = ({
   x,
   y,
@@ -34,7 +31,6 @@ export const FurnitureRenderer = ({
   return <ChairRenderer x={x} y={y} rotation={rotation} shape={shapeValue} scale={scale} />
 }
 
-// Диван рендерер
 const SofaRenderer = ({
   x,
   y,
@@ -233,7 +229,6 @@ const SofaRenderer = ({
     )
   }
 
-  // Прямой диван
   return (
     <Group x={x} y={y} rotation={rotation} listening={false}>
       <Rect
@@ -294,7 +289,6 @@ const SofaRenderer = ({
   )
 }
 
-// Кресло рендерер
 const ArmchairRenderer = ({
   x,
   y,
@@ -417,7 +411,6 @@ const ArmchairRenderer = ({
   )
 }
 
-// Стул рендерер
 const ChairRenderer = ({
   x,
   y,

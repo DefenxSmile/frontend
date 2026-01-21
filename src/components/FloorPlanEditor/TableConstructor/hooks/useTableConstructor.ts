@@ -22,9 +22,6 @@ interface UseTableConstructorReturn {
   resetConfig: () => void
 }
 
-/**
- * Хук для управления состоянием конструктора стола
- */
 export const useTableConstructor = ({
   initialConfig,
   onSave,
@@ -35,7 +32,6 @@ export const useTableConstructor = ({
     ...initialConfig,
   })
 
-  // Сброс конфигурации при открытии модалки
   useEffect(() => {
     if (open) {
       setConfig({

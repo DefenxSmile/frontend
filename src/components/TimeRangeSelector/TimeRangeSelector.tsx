@@ -37,7 +37,6 @@ const TimeRangeSelector = ({
   const [tempStartTime, setTempStartTime] = useState<string | null>(null)
   const [tempEndTime, setTempEndTime] = useState<string | null>(null)
 
-  // Получаем рабочие часы для выбранной даты
   const { startTime, endTime } = useMemo(() => {
     const date = new Date(selectedDate)
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -60,7 +59,6 @@ const TimeRangeSelector = ({
     return { startTime: start, endTime: end }
   }, [selectedDate, venueSettings])
 
-  // Преобразуем координату X в время
   const xToTime = useCallback(
     (x: number): Date | null => {
       if (!containerRef.current || !startTime || !endTime) return null
@@ -76,7 +74,6 @@ const TimeRangeSelector = ({
       const time = new Date(startTime)
       time.setMinutes(time.getMinutes() + minutes)
 
-      // Округляем до ближайших 15 минут для удобства
       const roundedMinutes = Math.round(time.getMinutes() / 15) * 15
       time.setMinutes(roundedMinutes, 0, 0)
 
@@ -85,7 +82,6 @@ const TimeRangeSelector = ({
     [startTime, endTime]
   )
 
-  // Преобразуем время в координату X
   const timeToX = useCallback(
     (time: Date): number => {
       if (!containerRef.current || !startTime || !endTime) return 0
@@ -137,13 +133,11 @@ const TimeRangeSelector = ({
         const end = selectedEndTime ? new Date(selectedEndTime) : null
         if (end && newTime >= end) return
         
-        // Просто устанавливаем новое время начала, не трогая конец
         setTempStartTime(newTime.toISOString())
       } else if (isDragging === 'end') {
         const start = selectedStartTime ? new Date(selectedStartTime) : null
         if (start && newTime <= start) return
         
-        // Просто устанавливаем новое время конца, не трогая начало
         setTempEndTime(newTime.toISOString())
       }
     },
@@ -174,13 +168,11 @@ const TimeRangeSelector = ({
         const end = selectedEndTime ? new Date(selectedEndTime) : null
         if (end && newTime >= end) return
         
-        // Просто устанавливаем новое время начала, не трогая конец
         setTempStartTime(newTime.toISOString())
       } else if (isDragging === 'end') {
         const start = selectedStartTime ? new Date(selectedStartTime) : null
         if (start && newTime <= start) return
         
-        // Просто устанавливаем новое время конца, не трогая начало
         setTempEndTime(newTime.toISOString())
       }
     },
@@ -211,11 +203,9 @@ const TimeRangeSelector = ({
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
-  // Обработка клика на шкале
   const handleTimelineClick = (e: React.MouseEvent) => {
     if (isDragging) return
     
-    // Проверяем, не кликнули ли мы на маркер
     const target = e.target as HTMLElement
     if (target.closest('[data-marker="start"]') || target.closest('[data-marker="end"]')) {
       return
@@ -224,7 +214,6 @@ const TimeRangeSelector = ({
     const time = xToTime(e.clientX)
     if (!time) return
 
-    // Если оба маркера установлены, перемещаем ближайший к клику
     if (selectedStartTime && selectedEndTime) {
       const startX = timeToX(new Date(selectedStartTime))
       const endX = timeToX(new Date(selectedEndTime))
@@ -234,21 +223,17 @@ const TimeRangeSelector = ({
       const distanceToEnd = Math.abs(clickX - endX)
 
       if (distanceToStart < distanceToEnd) {
-        // Перемещаем начало
         const end = new Date(selectedEndTime)
-        if (time >= end) return // Нельзя переместить начало после конца
+        if (time >= end) return
         onTimeRangeChange(time.toISOString(), selectedEndTime)
       } else {
-        // Перемещаем конец
         const start = new Date(selectedStartTime)
-        if (time <= start) return // Нельзя переместить конец до начала
+        if (time <= start) return
         onTimeRangeChange(selectedStartTime, time.toISOString())
       }
     } else if (selectedStartTime && !selectedEndTime) {
-      // Устанавливаем конец
       const start = new Date(selectedStartTime)
       if (time <= start) {
-        // Если кликнули до начала, меняем местами
         const newEnd = new Date(start.getTime() + minDuration * 60 * 1000)
         if (newEnd <= endTime!) {
           onTimeRangeChange(time.toISOString(), newEnd.toISOString())
@@ -257,7 +242,6 @@ const TimeRangeSelector = ({
         onTimeRangeChange(selectedStartTime, time.toISOString())
       }
     } else {
-      // Устанавливаем начало
       onTimeRangeChange(time.toISOString(), null)
     }
   }
@@ -272,7 +256,6 @@ const TimeRangeSelector = ({
   const displayStartTime = tempStartTime || selectedStartTime
   const displayEndTime = tempEndTime || selectedEndTime
 
-  // Вычисляем доступность для выбранного диапазона
   const rangeAvailability = useMemo(() => {
     if (!displayStartTime || !displayEndTime) return null
 
@@ -300,7 +283,6 @@ const TimeRangeSelector = ({
     }
   }, [displayStartTime, displayEndTime, bookings, tables])
 
-  // Генерируем метки времени
   const timeMarks = useMemo(() => {
     if (!startTime || !endTime) return []
 

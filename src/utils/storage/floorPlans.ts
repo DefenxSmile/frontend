@@ -44,7 +44,6 @@ export const saveFloorPlan = (plan: StoredFloorPlan): void => {
   
   localStorage.setItem(STORAGE_KEY_FLOOR_PLANS, JSON.stringify(plans))
   
-  // Обновляем флаг hasFloorPlan у клиента
   const client = getClient(plan.clientId)
   if (client) {
     saveClient({

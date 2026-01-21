@@ -34,7 +34,7 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
   if (!element) {
     return (
       <Paper className="properties-panel" elevation={2}>
-        <Typography variant="h6" sx={{ p: 2, color: '#757575' }}>
+        <Typography variant="h6" className="p-4 text-[#757575]">
           Выберите элемент для редактирования
         </Typography>
       </Paper>
@@ -54,8 +54,8 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
 
   return (
     <Paper className="properties-panel" elevation={2}>
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box className="p-4">
+        <Box className="flex justify-between items-center mb-4">
           <Typography variant="h6">
             {element.type === 'table' ? 'Стол' : element.type === 'wall' ? 'Стена' : element.type === 'door' ? 'Дверь' : 'Окно'}
           </Typography>
@@ -73,7 +73,7 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
           </Box>
         </Box>
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider className="mb-4" />
 
         {/* Название/Метка */}
         <TextField
@@ -83,29 +83,23 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
           onChange={(e) => handleChange('label', e.target.value)}
           onBlur={() => handleBlur('label')}
           size="small"
-          sx={{ mb: 2 }}
+          className="mb-4"
         />
 
-        {/* Для столов - кнопка редактирования в конструкторе */}
         {element.type === 'table' && onEditInConstructor && (
-          <Box sx={{ mb: 2 }}>
+          <Box className="mb-4">
             <Button
               fullWidth
               variant="contained"
               onClick={() => onEditInConstructor(element.id)}
-              sx={{
-                backgroundColor: '#4CAF50',
-                '&:hover': { backgroundColor: '#45a049' },
-                textTransform: 'none',
-              }}
+              className="properties-panel__edit-button"
             >
               Редактировать в конструкторе
             </Button>
           </Box>
         )}
 
-        {/* Позиция */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+        <Box className="flex gap-2 mb-4">
           <TextField
             label="X"
             type="number"
@@ -113,7 +107,7 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
             onChange={(e) => handleChange('x', parseFloat(e.target.value) || 0)}
             onBlur={() => handleBlur('x')}
             size="small"
-            sx={{ flex: 1 }}
+            className="flex-1"
           />
           <TextField
             label="Y"
@@ -122,13 +116,12 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
             onChange={(e) => handleChange('y', parseFloat(e.target.value) || 0)}
             onBlur={() => handleBlur('y')}
             size="small"
-            sx={{ flex: 1 }}
+            className="flex-1"
           />
         </Box>
 
-        {/* Размеры */}
         {element.width !== undefined && (
-          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+          <Box className="flex gap-2 mb-4">
             <TextField
               label="Ширина"
               type="number"
@@ -136,7 +129,7 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
               onChange={(e) => handleChange('width', parseFloat(e.target.value) || 0)}
               onBlur={() => handleBlur('width')}
               size="small"
-              sx={{ flex: 1 }}
+              className="flex-1"
             />
             {element.height !== undefined && (
               <TextField
@@ -146,13 +139,12 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
                 onChange={(e) => handleChange('height', parseFloat(e.target.value) || 0)}
                 onBlur={() => handleBlur('height')}
                 size="small"
-                sx={{ flex: 1 }}
+                className="flex-1"
               />
             )}
           </Box>
         )}
 
-        {/* Радиус для круглых столов */}
         {element.radius !== undefined && (
           <TextField
             fullWidth
@@ -162,7 +154,7 @@ const PropertiesPanel = ({ element, onUpdate, onDelete, onDuplicate, onEditInCon
             onChange={(e) => handleChange('radius', parseFloat(e.target.value) || 0)}
             onBlur={() => handleBlur('radius')}
             size="small"
-            sx={{ mb: 2 }}
+            className="mb-4"
           />
         )}
 

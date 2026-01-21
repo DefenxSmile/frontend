@@ -1,12 +1,8 @@
-// Константы приложения
-
-// Storage keys
 export const STORAGE_KEYS = {
   CLIENTS: 'restoreserve_clients',
   FLOOR_PLANS: 'restoreserve_floor_plans',
 } as const
 
-// Routes
 export const ROUTES = {
   HOME: '/',
   ADMIN: '/admin',
@@ -15,7 +11,6 @@ export const ROUTES = {
   USER: '/user',
 } as const
 
-// Default values
 export const DEFAULTS = {
   CLIENT: {
     NAME: '',
@@ -28,7 +23,6 @@ export const DEFAULTS = {
   },
 } as const
 
-// Validation
 export const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   PHONE_REGEX: /^[\d\s\-\+\(\)]+$/,

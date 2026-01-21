@@ -14,33 +14,29 @@ export interface FloorPlanElement {
   stroke?: string
   strokeWidth?: number
   label?: string
-  // Для столов
   tableShape?: TableShape
   capacity?: number
-  isAvailable?: boolean // Доступен ли стол для бронирования (по умолчанию true)
-  furnitureType?: 'chair' | 'sofa' | 'armchair' // Тип мебели: стулья или диваны
-  showFurniture?: boolean // Показывать ли мебель вокруг стола
+  isAvailable?: boolean
+  furnitureType?: 'chair' | 'sofa' | 'armchair'
+  showFurniture?: boolean
   furniturePositions?: Array<{
-    side: 'top' | 'right' | 'bottom' | 'left' | 'circle' // Сторона стола или 'circle' для круглых столов
-    index: number // Индекс на стороне (для квадратных/прямоугольных) или общий индекс (для круглых)
-    angle?: number // Угол для круглых столов (в градусах)
-    offset?: number // Смещение от края стола
-    shape?: 'straight' | 'curved' | 'l-shaped' | 'l-shaped-reverse' | 'round' // Форма мебели
+    side: 'top' | 'right' | 'bottom' | 'left' | 'circle'
+    index: number
+    angle?: number
+    offset?: number
+    shape?: 'straight' | 'curved' | 'l-shaped' | 'l-shaped-reverse' | 'round'
   }>
-  // Для стен (начальная и конечная точка при рисовании)
   startX?: number
   startY?: number
-  // Z-index для управления порядком отрисовки
   zIndex?: number
-  // Для групп
-  children?: string[] // IDs дочерних элементов
+  children?: string[]
   isGroup?: boolean
 }
 
 export interface Floor {
   id: string
   name: string
-  level: number // Номер этажа (0, 1, 2, -1 для подвала и т.д.)
+  level: number
   elements: FloorPlanElement[]
   stage?: {
     scale?: number

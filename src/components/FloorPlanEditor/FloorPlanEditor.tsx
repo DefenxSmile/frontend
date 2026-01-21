@@ -40,7 +40,6 @@ import {
   ContentCopy as CopyIcon,
   Edit as EditIcon,
 } from '@mui/icons-material'
-import { useSaveFloorPlan } from '../../hooks/useFloorPlan'
 import type { FloorPlanElement, FloorPlanData, TableShape, Floor } from '../../types/floorPlan'
 import PropertiesPanel from './PropertiesPanel'
 import TableShapeSelector from './TableShapeSelector'
@@ -74,15 +73,13 @@ const FloorPlanEditor = ({
   const [selectedTool, setSelectedTool] = useState<ToolType>('select')
   const [isSpacePressed, setIsSpacePressed] = useState(false) // Для отслеживания Space
   const [tableNumber, setTableNumber] = useState(1)
-  const [draggedTool, setDraggedTool] = useState<ToolType | null>(null) // Инструмент, который перетаскивается
-  const [isDraggingTool, setIsDraggingTool] = useState(false) // Флаг для отслеживания перетаскивания инструмента
-  // Этажи
+  const [draggedTool, setDraggedTool] = useState<ToolType | null>(null)
+  const [isDraggingTool, setIsDraggingTool] = useState(false)
   const [floors, setFloors] = useState<Floor[]>([
     { id: 'floor-1', name: 'Первый этаж', level: 1, elements: [] },
   ])
   const [currentFloorId, setCurrentFloorId] = useState<string>('floor-1')
 
-  // Загрузка начального плана этажа
   useEffect(() => {
     if (initialFloorPlan) {
       setClientName(initialFloorPlan.metadata?.clientName || '')
@@ -107,7 +104,6 @@ const FloorPlanEditor = ({
     }
   }, [initialFloorPlan])
 
-  // Синхронизация элементов с текущим этажом
   useEffect(() => {
     const currentFloor = floors.find((f) => f.id === currentFloorId)
     if (currentFloor) {
@@ -119,7 +115,7 @@ const FloorPlanEditor = ({
   const [jsonToSave, setJsonToSave] = useState<string>('')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [tableConstructorOpen, setTableConstructorOpen] = useState(false)
-  const [editingTableId, setEditingTableId] = useState<string | null>(null) // ID редактируемого стола
+  const [editingTableId, setEditingTableId] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number
     mouseY: number
@@ -131,15 +127,12 @@ const FloorPlanEditor = ({
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
-  // Для рисования стен
   const [isDrawingWall, setIsDrawingWall] = useState(false)
   const [wallStart, setWallStart] = useState<{ x: number; y: number } | null>(null)
   const [tempWall, setTempWall] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
-  // Для selection box (выделение зоны)
   const [isSelecting, setIsSelecting] = useState(false)
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null)
   const [selectionBox, setSelectionBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
-  // Для панорамирования (Space + drag или средняя кнопка мыши)
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
 
@@ -151,9 +144,7 @@ const FloorPlanEditor = ({
   const canvasWrapperRef = useRef<HTMLDivElement>(null)
   const pendingTablePosition = useRef<{ x: number; y: number } | null>(null)
   const [stageSize, setStageSize] = useState({ width: 1200, height: 800 })
-  const saveMutation = useSaveFloorPlan()
 
-  // Обновление размеров Stage при изменении размера окна
   useEffect(() => {
     const updateStageSize = () => {
       if (canvasContainerRef.current) {
@@ -166,7 +157,6 @@ const FloorPlanEditor = ({
       }
     }
 
-    // Используем ResizeObserver для отслеживания изменений размера контейнера
     if (canvasContainerRef.current) {
       updateStageSize()
       const resizeObserver = new ResizeObserver(updateStageSize)
@@ -180,7 +170,6 @@ const FloorPlanEditor = ({
     }
   }, [])
 
-  // Центрирование Stage при первой загрузке
   useEffect(() => {
     if (stageSize.width > 0 && stageSize.height > 0) {
       // Центрируем Stage: смещаем так, чтобы центр Stage (1000, 750) был в центре viewport
@@ -1158,21 +1147,9 @@ const FloorPlanEditor = ({
     
     const data = prepareJsonData()
     
-    // Если передан onSave callback, используем его
     if (onSave) {
       onSave(data, clientName, venueName)
       setShowJsonDialog(false)
-      return
-    }
-    
-    // Иначе используем стандартное сохранение через API
-    try {
-      await saveMutation.mutateAsync(data)
-      setShowJsonDialog(false)
-      alert('План успешно сохранен!')
-    } catch (error) {
-      console.error('Error saving floor plan:', error)
-      alert('Ошибка при сохранении плана')
     }
   }
 
@@ -2008,33 +1985,25 @@ const FloorPlanEditor = ({
   return (
     <Box 
       className="floor-plan-editor"
-      sx={{
-        backgroundColor: 'background.default',
-      }}
     >
       <Box className="floor-plan-editor__container">
         {/* Боковая панель инструментов */}
         <Paper 
-          className="floor-plan-editor__sidebar" 
+          className="floor-plan-editor__sidebar flex flex-col h-full" 
           elevation={2}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-          }}
         >
-          <Box sx={{ flex: '0 0 auto' }}>
+          <Box className="flex-none">
             <Typography variant="h6" className="floor-plan-editor__sidebar-title">
               Инструменты
             </Typography>
-            <Typography variant="caption" sx={{ color: '#757575', display: 'block', mb: 2, fontSize: '11px' }}>
+            <Typography variant="caption" className="text-[#757575] block mb-4 text-[11px]">
               Панорамирование: Space + перетаскивание или средняя кнопка мыши
               <br />
               Выделение зоны: перетаскивание на пустом месте
               <br />
               Добавление элементов: перетащите инструмент на canvas или кликните
             </Typography>
-            <Divider sx={{ my: 2 }} />
+            <Divider className="my-4" />
             
             <Box className="floor-plan-editor__tools">
               {tools.map((tool) => {
@@ -2043,10 +2012,11 @@ const FloorPlanEditor = ({
                 return (
                   <Tooltip key={tool.id} title={`${tool.label}${tool.id !== 'select' ? ' (перетащите на canvas)' : ''}`} placement="right">
                     <Button
-                      className={`floor-plan-editor__tool ${isActive ? 'active' : ''}`}
+                      className={`floor-plan-editor__tool ${isActive ? 'active' : ''} min-w-[48px] h-12 rounded-[10px] mb-1.5 ${
+                        tool.id !== 'select' ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+                      } hover:-translate-y-px`}
                       onMouseDown={(e) => {
                         if (tool.id === 'table') {
-                          // Для стола открываем конструктор
                           e.preventDefault()
                           e.stopPropagation()
                           setTableConstructorOpen(true)
@@ -2056,14 +2026,12 @@ const FloorPlanEditor = ({
                           e.stopPropagation()
                           setDraggedTool(tool.id)
                           setIsDraggingTool(true)
-                          // Изменяем курсор на canvas
                           if (canvasWrapperRef.current) {
                             canvasWrapperRef.current.style.cursor = 'crosshair'
                           }
                         }
                       }}
                       onClick={() => {
-                        // Если не было перетаскивания, просто выбираем инструмент
                         if (!isDraggingTool && tool.id !== 'table') {
                           setSelectedTool(tool.id)
                           if (tool.id !== 'select') {
@@ -2072,36 +2040,34 @@ const FloorPlanEditor = ({
                         }
                       }}
                       variant={isActive ? 'contained' : 'outlined'}
-                      sx={{
-                        minWidth: '48px',
-                        height: '48px',
-                        borderRadius: '10px',
-                        mb: 0.75,
+                      style={{
                         borderColor: isActive ? tool.color : '#E8E8E8',
                         backgroundColor: isActive ? tool.color : 'transparent',
                         borderWidth: isActive ? 2 : 1,
-                        cursor: tool.id !== 'select' ? 'grab' : 'pointer',
-                        '&:active': {
-                          cursor: tool.id !== 'select' ? 'grabbing' : 'pointer',
-                        },
-                        '&:hover': {
-                          backgroundColor: isActive ? tool.color : '#FAFAFA',
-                          borderColor: tool.color,
-                          transform: 'translateY(-1px)',
-                        },
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = '#FAFAFA'
+                          e.currentTarget.style.borderColor = tool.color
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                          e.currentTarget.style.borderColor = '#E8E8E8'
+                        }
                       }}
                     >
-                      <Icon sx={{ color: isActive ? '#fff' : '#666' }} />
+                      <Icon className={isActive ? 'text-white' : 'text-[#666]'} />
                     </Button>
                   </Tooltip>
                 )
               })}
             </Box>
 
-            {/* Селектор формы стола */}
             {selectedTool === 'table' && (
               <>
-                <Divider sx={{ my: 1.5 }} />
+                <Divider className="my-3" />
                 <TableShapeSelector
                   selectedShape={selectedTableShape}
                   onShapeChange={setSelectedTableShape}
@@ -2109,7 +2075,7 @@ const FloorPlanEditor = ({
               </>
             )}
 
-            <Divider sx={{ my: 2 }} />
+            <Divider className="my-4" />
 
             {/* Группировка */}
             <Box className="floor-plan-editor__actions">
@@ -2139,24 +2105,19 @@ const FloorPlanEditor = ({
               </Tooltip>
             </Box>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider className="my-4" />
 
-            {/* Этажи */}
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, fontSize: '13px' }}>
+            <Typography variant="subtitle2" className="mb-2 font-semibold text-[13px]">
               Этажи
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 1.5 }}>
+            <Box className="flex flex-col gap-1.5 mb-3">
               {floors.map((floor) => (
                 <Box
                   key={floor.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                  }}
+                  className="flex items-center gap-1"
                 >
                   {editingFloorId === floor.id ? (
-                    <Box sx={{ flex: 1, display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                    <Box className="flex-1 flex gap-1 items-center">
                       <TextField
                         value={editingFloorName}
                         onChange={(e) => setEditingFloorName(e.target.value)}
@@ -2169,23 +2130,13 @@ const FloorPlanEditor = ({
                         }}
                         size="small"
                         autoFocus
-                        sx={{
-                          flex: 1,
-                          '& .MuiInputBase-root': {
-                            height: '36px',
-                            fontSize: '13px',
-                            borderRadius: '8px',
-                          },
-                        }}
+                        className="flex-1 [&_.MuiInputBase-root]:h-9 [&_.MuiInputBase-root]:text-[13px] [&_.MuiInputBase-root]:rounded-lg"
                       />
                       <Tooltip title="Сохранить">
                         <IconButton
                           size="small"
                           onClick={() => handleSaveFloorName(floor.id)}
-                          sx={{
-                            color: '#4CAF50',
-                            '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.08)' },
-                          }}
+                          className="text-[#4CAF50] hover:bg-[rgba(76,175,80,0.08)]"
                         >
                           <SaveIcon fontSize="small" />
                         </IconButton>
@@ -2194,10 +2145,7 @@ const FloorPlanEditor = ({
                         <IconButton
                           size="small"
                           onClick={handleCancelEditFloorName}
-                          sx={{
-                            color: '#757575',
-                            '&:hover': { backgroundColor: 'rgba(117, 117, 117, 0.08)' },
-                          }}
+                          className="text-[#757575] hover:bg-[rgba(117,117,117,0.08)]"
                         >
                           <ClearIcon fontSize="small" />
                         </IconButton>
@@ -2210,22 +2158,11 @@ const FloorPlanEditor = ({
                         onClick={() => handleFloorChange(floor.id)}
                         onDoubleClick={() => handleStartEditFloorName(floor.id, floor.name)}
                         size="small"
-                        sx={{
-                          flex: 1,
-                          justifyContent: 'flex-start',
-                          textTransform: 'none',
-                          fontSize: '13px',
-                          height: '36px',
-                          borderRadius: '8px',
-                          backgroundColor: currentFloorId === floor.id ? '#FF6B01' : 'transparent',
-                          borderColor: currentFloorId === floor.id ? '#FF6B01' : '#E8E8E8',
-                          color: currentFloorId === floor.id ? '#FFFFFF' : '#666',
-                          fontWeight: currentFloorId === floor.id ? 600 : 500,
-                          '&:hover': {
-                            backgroundColor: currentFloorId === floor.id ? '#E55A00' : '#FAFAFA',
-                            borderColor: '#FF6B01',
-                          },
-                        }}
+                        className={`flex-1 justify-start normal-case text-[13px] h-9 rounded-lg ${
+                          currentFloorId === floor.id
+                            ? 'bg-[#FF6B01] border-[#FF6B01] text-white font-semibold hover:bg-[#E55A00] hover:border-[#FF6B01]'
+                            : 'bg-transparent border-[#E8E8E8] text-[#666] font-medium hover:bg-[#FAFAFA] hover:border-[#FF6B01]'
+                        }`}
                       >
                         {floor.name}
                       </Button>
@@ -2233,10 +2170,7 @@ const FloorPlanEditor = ({
                         <IconButton
                           size="small"
                           onClick={() => handleStartEditFloorName(floor.id, floor.name)}
-                          sx={{
-                            color: '#666',
-                            '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.08)' },
-                          }}
+                          className="text-[#666] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.08)]"
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -2246,10 +2180,7 @@ const FloorPlanEditor = ({
                           <IconButton
                             size="small"
                             onClick={() => handleDeleteFloor(floor.id)}
-                            sx={{
-                              color: '#F44336',
-                              '&:hover': { backgroundColor: 'rgba(244, 67, 54, 0.08)' },
-                            }}
+                            className="text-[#F44336] hover:bg-[rgba(244,67,54,0.08)]"
                           >
                             <DeleteFloorIcon fontSize="small" />
                           </IconButton>
@@ -2263,28 +2194,14 @@ const FloorPlanEditor = ({
                 variant="outlined"
                 onClick={handleAddFloor}
                 size="small"
-                startIcon={<AddIcon sx={{ fontSize: '16px' }} />}
-                sx={{
-                  justifyContent: 'flex-start',
-                  textTransform: 'none',
-                  fontSize: '13px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  borderStyle: 'dashed',
-                  borderColor: '#E0E0E0',
-                  color: '#999',
-                  '&:hover': {
-                    borderColor: '#FF6B01',
-                    color: '#FF6B01',
-                    backgroundColor: 'rgba(255, 107, 1, 0.05)',
-                  },
-                }}
+                startIcon={<AddIcon className="text-base" />}
+                className="justify-start normal-case text-[13px] h-9 rounded-lg border-dashed border-[#E0E0E0] text-[#999] hover:border-[#FF6B01] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.05)]"
               >
                 Добавить этаж
               </Button>
             </Box>
 
-            <Divider sx={{ my: 1.5 }} />
+            <Divider className="my-3" />
 
             {/* Действия */}
             <Box className="floor-plan-editor__actions">
@@ -2294,11 +2211,7 @@ const FloorPlanEditor = ({
                     onClick={handleCopy}
                     disabled={!selectedId && selectedIds.length === 0}
                     size="medium"
-                    sx={{
-                      color: '#666',
-                      '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.08)' },
-                      '&:disabled': { color: '#CCC' },
-                    }}
+                    className="text-[#666] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.08)] disabled:text-[#CCC]"
                   >
                     <CopyIcon fontSize="small" />
                   </IconButton>
@@ -2310,11 +2223,7 @@ const FloorPlanEditor = ({
                     onClick={() => handleDelete()}
                     disabled={!selectedId && selectedIds.length === 0}
                     size="medium"
-                    sx={{
-                      color: '#F44336',
-                      '&:hover': { backgroundColor: 'rgba(244, 67, 54, 0.08)' },
-                      '&:disabled': { color: '#CCC' },
-                    }}
+                    className="text-[#F44336] hover:bg-[rgba(244,67,54,0.08)] disabled:text-[#CCC]"
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -2324,55 +2233,40 @@ const FloorPlanEditor = ({
                 <IconButton
                   onClick={handleClear}
                   size="medium"
-                  sx={{
-                    color: '#FF9800',
-                    '&:hover': { backgroundColor: 'rgba(255, 152, 0, 0.08)' },
-                  }}
+                  className="text-[#FF9800] hover:bg-[rgba(255,152,0,0.08)]"
                 >
                   <ClearIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Box>
 
-            <Divider sx={{ my: 1.5 }} />
+            <Divider className="my-3" />
 
-            {/* Статистика */}
             <Box className="floor-plan-editor__stats">
               <Chip
                 label={`Элементов: ${elements.length}`}
                 size="small"
                 variant="outlined"
-                sx={{ mb: 1, width: '100%' }}
+                className="mb-2 w-full"
               />
               <Chip
                 label={`Столов: ${elements.filter((e) => e.type === 'table').length}`}
                 size="small"
                 variant="outlined"
-                sx={{ width: '100%' }}
+                className="w-full"
               />
             </Box>
           </Box>
         </Paper>
 
         {/* Основная область с канвасом */}
-        <Box sx={{ flex: 1, display: 'flex', gap: 2, minWidth: 0 }}>
+        <Box className="flex-1 flex gap-4 min-w-0">
         <Paper 
           ref={canvasWrapperRef}
-          className="floor-plan-editor__canvas-wrapper" 
+          className="floor-plan-editor__canvas-wrapper relative" 
           elevation={1}
-          sx={{
-            position: 'relative',
-          }}
         >
-          {/* Кнопка сохранения - справа вверху */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              zIndex: 10,
-            }}
-          >
+          <Box className="absolute top-4 right-4 z-10">
             <Button
               variant="contained"
               color="primary"
@@ -2380,70 +2274,24 @@ const FloorPlanEditor = ({
               startIcon={<SaveIcon />}
               onClick={handleSave}
               disabled={elements.length === 0}
-              sx={{
-                py: 1.5,
-                px: 3,
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: 600,
-                backgroundColor: '#FF6B01',
-                color: '#FFFFFF',
-                textTransform: 'none',
-                boxShadow: '0 4px 12px rgba(255, 107, 1, 0.4)',
-                '&:hover': {
-                  backgroundColor: '#E55A00',
-                  boxShadow: '0 6px 16px rgba(255, 107, 1, 0.5)',
-                  transform: 'translateY(-2px)',
-                },
-                '&:disabled': {
-                  backgroundColor: '#E0E0E0',
-                  color: '#9E9E9E',
-                  boxShadow: 'none',
-                },
-                transition: 'all 0.2s ease',
-              }}
+              className="py-3 px-6 rounded-xl text-base font-semibold bg-[#FF6B01] text-white normal-case shadow-[0_4px_12px_rgba(255,107,1,0.4)] hover:bg-[#E55A00] hover:shadow-[0_6px_16px_rgba(255,107,1,0.5)] hover:-translate-y-0.5 disabled:bg-[#E0E0E0] disabled:text-[#9E9E9E] disabled:shadow-none transition-all duration-200"
             >
               Сохранить план
             </Button>
           </Box>
           <Box 
             ref={canvasContainerRef}
-            className="floor-plan-editor__canvas-container" 
-            sx={{ 
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              minHeight: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="floor-plan-editor__canvas-container relative w-full h-full min-h-0 flex items-center justify-center"
           >
-            {/* Элементы управления на канвасе - левый верхний угол */}
             <Paper
               elevation={3}
-              sx={{
-                position: 'absolute',
-                top: 16,
-                left: 16,
-                zIndex: 1000,
-                p: 1,
-                borderRadius: '12px',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                display: 'flex',
-                gap: 0.5,
-                alignItems: 'center',
-              }}
+              className="absolute top-4 left-4 z-[1000] p-2 rounded-xl bg-[rgba(255,255,255,0.95)] backdrop-blur-[10px] flex gap-1 items-center"
             >
               <Tooltip title="Увеличить">
                 <IconButton
                   onClick={() => handleZoom(0.1)}
                   size="small"
-                  sx={{
-                    color: '#666',
-                    '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.08)' },
-                  }}
+                  className="text-[#666] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.08)]"
                 >
                   <ZoomInIcon fontSize="small" />
                 </IconButton>
@@ -2452,10 +2300,7 @@ const FloorPlanEditor = ({
                 <IconButton
                   onClick={() => handleZoom(-0.1)}
                   size="small"
-                  sx={{
-                    color: '#666',
-                    '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.08)' },
-                  }}
+                  className="text-[#666] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.08)]"
                 >
                   <ZoomOutIcon fontSize="small" />
                 </IconButton>
@@ -2464,24 +2309,21 @@ const FloorPlanEditor = ({
                 <IconButton
                   onClick={handleFitScreen}
                   size="small"
-                  sx={{
-                    color: '#666',
-                    '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.08)' },
-                  }}
+                  className="text-[#666] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.08)]"
                 >
                   <FitScreenIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+              <Divider orientation="vertical" flexItem className="mx-1" />
               <Tooltip title={showGrid ? 'Скрыть сетку' : 'Показать сетку'}>
                 <IconButton
                   onClick={() => setShowGrid(!showGrid)}
                   size="small"
-                  sx={{
-                    color: showGrid ? '#FF6B01' : '#666',
-                    backgroundColor: showGrid ? 'rgba(255, 107, 1, 0.08)' : 'transparent',
-                    '&:hover': { color: '#FF6B01', backgroundColor: 'rgba(255, 107, 1, 0.12)' },
-                  }}
+                  className={`${
+                    showGrid
+                      ? 'text-[#FF6B01] bg-[rgba(255,107,1,0.08)] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.12)]'
+                      : 'text-[#666] bg-transparent hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.12)]'
+                  }`}
                 >
                   <GridIcon fontSize="small" />
                 </IconButton>
@@ -2582,18 +2424,17 @@ const FloorPlanEditor = ({
               scaleY={scale}
               x={position.x}
               y={position.y}
-              style={{
-                backgroundColor: '#FAFBFC',
-                cursor: isPanning || isSpacePressed
-                  ? 'grabbing'
+              className={`bg-[#FAFBFC] ${
+                isPanning || isSpacePressed
+                  ? 'cursor-grabbing'
                   : selectedTool === 'wall'
-                  ? 'crosshair'
+                  ? 'cursor-crosshair'
                   : selectedTool === 'select' && isSelecting
-                  ? 'crosshair'
+                  ? 'cursor-crosshair'
                   : selectedTool === 'select'
-                  ? 'default'
-                  : 'crosshair',
-              }}
+                  ? 'cursor-default'
+                  : 'cursor-crosshair'
+              }`}
             >
               {/* Слой сетки (фон) */}
               <Layer>
@@ -2702,7 +2543,7 @@ const FloorPlanEditor = ({
               size="small"
               variant="outlined"
               onClick={() => setSnapToGrid(!snapToGrid)}
-              sx={{ cursor: 'pointer' }}
+              className="cursor-pointer"
             />
             <Typography variant="body2" color="text.secondary">
               Используйте колесо мыши для масштабирования, зажмите и перетащите для перемещения
@@ -2719,22 +2560,19 @@ const FloorPlanEditor = ({
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         PaperProps={{
-          sx: {
-            width: 360,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-          },
+          className: "w-[360px] shadow-[0_4px_20px_rgba(0,0,0,0.15)]",
         }}
       >
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+        <Box className="p-4">
+          <Box className="flex justify-between items-center mb-4">
+            <Typography variant="h6" className="font-bold">
               Редактирование элемента
             </Typography>
             <IconButton onClick={() => setDrawerOpen(false)} size="small">
               <ClearIcon />
             </IconButton>
           </Box>
-          <Divider sx={{ mb: 2 }} />
+          <Divider className="mb-4" />
           {selectedId && (
             <PropertiesPanel
               element={elements.find((el) => el.id === selectedId) || null}
@@ -2760,11 +2598,7 @@ const FloorPlanEditor = ({
             : undefined
         }
         PaperProps={{
-          sx: {
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            minWidth: 180,
-          },
+          className: "rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-[180px]",
         }}
       >
         <MenuItem
@@ -2809,10 +2643,10 @@ const FloorPlanEditor = ({
               setContextMenu(null)
             }
           }}
-          sx={{ color: '#F44336' }}
+          className="text-[#F44336]"
         >
           <ListItemIcon>
-            <DeleteIcon fontSize="small" sx={{ color: '#F44336' }} />
+            <DeleteIcon fontSize="small" className="text-[#F44336]" />
           </ListItemIcon>
           <ListItemText>Удалить</ListItemText>
         </MenuItem>
@@ -2827,7 +2661,7 @@ const FloorPlanEditor = ({
       >
         <DialogTitle>Сохранение плана</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 2 }}>
+          <Box className="flex flex-col gap-6 pt-4">
             <TextField
               fullWidth
               label="Имя клиента"
@@ -2835,11 +2669,7 @@ const FloorPlanEditor = ({
               onChange={(e) => setClientName(e.target.value)}
               variant="outlined"
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                },
-              }}
+              className="[&_.MuiOutlinedInput-root]:rounded-xl"
             />
             <TextField
               fullWidth
@@ -2848,14 +2678,10 @@ const FloorPlanEditor = ({
               onChange={(e) => setVenueName(e.target.value)}
               variant="outlined"
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                },
-              }}
+              className="[&_.MuiOutlinedInput-root]:rounded-xl"
             />
             <Divider />
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography variant="subtitle2" className="font-semibold mb-2">
               JSON для сохранения на бекенде
             </Typography>
             <TextField
@@ -2867,15 +2693,11 @@ const FloorPlanEditor = ({
                 readOnly: true,
               }}
               variant="outlined"
+              className="font-mono text-xs [&_.MuiInputBase-root]:bg-[#F5F5F5]"
               sx={{
-                fontFamily: 'monospace',
-                fontSize: '12px',
                 '& .MuiInputBase-input': {
                   fontFamily: 'monospace',
                   fontSize: '12px',
-                },
-                '& .MuiInputBase-root': {
-                  backgroundColor: '#F5F5F5',
                 },
               }}
             />
@@ -2886,9 +2708,9 @@ const FloorPlanEditor = ({
           <Button
             onClick={handleConfirmSave}
             variant="contained"
-            disabled={saveMutation.isPending || !clientName.trim() || !venueName.trim()}
+            disabled={!clientName.trim() || !venueName.trim()}
           >
-            {saveMutation.isPending ? 'Сохранение...' : 'Сохранить на бекенде'}
+            Сохранить на бекенде
           </Button>
         </DialogActions>
       </Dialog>

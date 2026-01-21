@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -20,6 +20,8 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  CircularProgress,
+  Alert,
 } from '@mui/material'
 import {
   Edit as EditIcon,
@@ -29,22 +31,18 @@ import {
   MoreVert as MoreVertIcon,
   Construction as ConstructionIcon,
 } from '@mui/icons-material'
-import { getClients, deleteClient, initializeMockData, type StoredClient } from '../../../utils/storage'
+import { useVenues, useDeleteVenue } from '../../../domain/hooks'
 import ClientFormDrawer from '../../../components/ClientFormDrawer/ClientFormDrawer'
 import './index.scss'
 
 const AdminClientsPage = () => {
   const navigate = useNavigate()
-  const [clients, setClients] = useState<StoredClient[]>([])
+  const { data: venues, isLoading, error } = useVenues()
+  const deleteVenue = useDeleteVenue()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
-
-  useEffect(() => {
-    initializeMockData()
-    setClients(getClients())
-  }, [])
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, clientId: string) => {
     setAnchorEl(event.currentTarget)
@@ -89,11 +87,16 @@ const AdminClientsPage = () => {
 
   const handleDelete = () => {
     if (selectedClientId) {
-      if (window.confirm('Вы уверены, что хотите удалить этого клиента? Все связанные планы также будут удалены.')) {
-        deleteClient(selectedClientId)
-        setClients(getClients())
+      const venueId = Number(selectedClientId)
+      if (!isNaN(venueId) && window.confirm('Вы уверены, что хотите удалить этого клиента? Все связанные планы также будут удалены.')) {
+        deleteVenue.mutate(venueId, {
+          onSuccess: () => {
+            handleMenuClose()
+          },
+        })
+      } else {
+        handleMenuClose()
       }
-      handleMenuClose()
     }
   }
 
@@ -108,7 +111,6 @@ const AdminClientsPage = () => {
   }
 
   const handleClientSave = () => {
-    setClients(getClients())
   }
 
   return (
@@ -156,7 +158,19 @@ const AdminClientsPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {clients.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                      <Alert severity="error">Ошибка загрузки данных: {error.message}</Alert>
+                    </TableCell>
+                  </TableRow>
+                ) : !venues || venues.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                       <Typography variant="body1" color="text.secondary">
@@ -165,9 +179,13 @@ const AdminClientsPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  clients.map((client) => (
+                  venues.map((venue) => {
+                    const client = venue.floorPlan.metadata
+                    if (!client) return null
+                    
+                    return (
                     <TableRow
-                      key={client.id}
+                      key={venue.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: 'action.hover',
@@ -176,7 +194,7 @@ const AdminClientsPage = () => {
                     >
                       <TableCell>
                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {client.name}
+                          {client.clientName}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -186,23 +204,16 @@ const AdminClientsPage = () => {
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          {client.email && (
-                            <Typography variant="caption" color="text.secondary">
-                              {client.email}
-                            </Typography>
-                          )}
-                          {client.phone && (
-                            <Typography variant="caption" color="text.secondary">
-                              {client.phone}
-                            </Typography>
-                          )}
+                          <Typography variant="caption" color="text.secondary">
+                            -
+                          </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={client.hasFloorPlan ? 'План создан' : 'Без плана'}
+                          label={venue.floorPlan.floors.length > 0 ? 'План создан' : 'Без плана'}
                           size="small"
-                          color={client.hasFloorPlan ? 'success' : 'default'}
+                          color={venue.floorPlan.floors.length > 0 ? 'success' : 'default'}
                           sx={{
                             fontWeight: 600,
                             fontSize: '11px',
@@ -211,7 +222,7 @@ const AdminClientsPage = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="caption" color="text.secondary">
-                          {new Date(client.createdAt).toLocaleDateString('ru-RU')}
+                          {client.createdAt ? new Date(client.createdAt).toLocaleDateString('ru-RU') : '-'}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -219,7 +230,7 @@ const AdminClientsPage = () => {
                           <Tooltip title="Действия">
                             <IconButton
                               size="small"
-                              onClick={(e) => handleMenuOpen(e, client.id)}
+                              onClick={(e) => handleMenuOpen(e, String(venue.id))}
                               sx={{
                                 color: 'text.secondary',
                                 '&:hover': {
@@ -233,7 +244,8 @@ const AdminClientsPage = () => {
                         </Box>
                       </TableCell>
                     </TableRow>
-                  ))
+                  )
+                  })
                 )}
               </TableBody>
             </Table>
@@ -269,7 +281,7 @@ const AdminClientsPage = () => {
           </MenuItem>
           {selectedClientId && (
             <>
-              {clients.find((c) => c.id === selectedClientId)?.hasFloorPlan ? (
+              {venues?.find((v) => String(v.id) === selectedClientId)?.floorPlan.floors.length ? (
                 <>
                   <MenuItem onClick={handleEditPlan}>
                     <ListItemIcon>
