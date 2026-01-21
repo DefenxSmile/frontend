@@ -6,7 +6,9 @@ import axios, {
 } from 'axios';
 import { VITE_API_URL } from '../../config';
 
-const API_BASE_URL = VITE_API_URL;
+// В режиме разработки используем прокси Vite для обхода CORS
+// В production используем прямой URL
+const API_BASE_URL = import.meta.env.DEV ? '/api' : (VITE_API_URL || '/api');
 
 let authToken: string | null = null;
 
