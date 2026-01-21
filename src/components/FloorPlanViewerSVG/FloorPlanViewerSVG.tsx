@@ -274,12 +274,11 @@ const FloorPlanViewerSVG = ({
                   fontWeight="600"
                   fill="#212121"
                   fontFamily="Inter, sans-serif"
-                  style={{ pointerEvents: 'none' }}
+                  className="pointer-events-none"
                 >
                   {element.label}
                 </text>
               )}
-              {/* Вместимость */}
               {capacity && (
                 <text
                   x={element.x}
@@ -289,7 +288,7 @@ const FloorPlanViewerSVG = ({
                   fontWeight="500"
                   fill="#757575"
                   fontFamily="Inter, sans-serif"
-                  style={{ pointerEvents: 'none' }}
+                  className="pointer-events-none"
                 >
                   {capacity} мест
                 </text>
@@ -530,12 +529,20 @@ const FloorPlanViewerSVG = ({
             </IconButton>
           </Tooltip>
           <Tooltip title={showGrid ? 'Скрыть сетку' : 'Показать сетку'}>
-            <IconButton size="small" onClick={() => setShowGrid(!showGrid)}>
+            <IconButton
+              size="small"
+              onClick={() => setShowGrid(!showGrid)}
+              className={`${
+                showGrid
+                  ? 'text-[#FF6B01] bg-[rgba(255,107,1,0.08)] hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.12)]'
+                  : 'text-[#666] bg-transparent hover:text-[#FF6B01] hover:bg-[rgba(255,107,1,0.12)]'
+              }`}
+            >
               <GridIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           {data.floors.length > 1 && (
-            <Box sx={{ ml: 2, display: 'flex', gap: 1 }}>
+            <Box className="ml-4 flex gap-2">
               {data.floors.map((floor) => (
                 <Chip
                   key={floor.id}
@@ -543,7 +550,7 @@ const FloorPlanViewerSVG = ({
                   size="small"
                   onClick={() => setCurrentFloorId(floor.id)}
                   color={currentFloorId === floor.id ? 'primary' : 'default'}
-                  sx={{ fontSize: '11px' }}
+                  className="text-[11px]"
                 />
               ))}
             </Box>
@@ -565,11 +572,9 @@ const FloorPlanViewerSVG = ({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            style={{
-              cursor: isDragging ? 'grabbing' : interactive ? 'default' : 'grab',
-              backgroundColor: '#FAFBFC',
-              touchAction: interactive ? 'auto' : 'none', // Предотвращаем стандартные жесты браузера
-            }}
+            className={`floor-plan-viewer-svg__canvas ${
+              isDragging ? 'cursor-grabbing' : interactive ? 'cursor-default' : 'cursor-grab'
+            } ${interactive ? 'touch-action-auto' : 'touch-action-none'}`}
           >
             {/* Фильтры для теней */}
             <defs>
@@ -581,9 +586,7 @@ const FloorPlanViewerSVG = ({
             {/* Группа для трансформации */}
             <g
               transform={`translate(${position.x}, ${position.y}) scale(${scale})`}
-              style={{ 
-                transformOrigin: '0 0',
-              }}
+              className="origin-top-left"
             >
               {/* Сетка */}
               {renderGrid()}

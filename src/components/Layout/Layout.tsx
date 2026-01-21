@@ -18,58 +18,26 @@ const Layout = ({ children }: LayoutProps) => {
     <Box className="layout">
       <AppBar 
         position="static"
-        sx={{
-          backgroundColor: '#FF6B01',
-          borderRadius: 0,
-          boxShadow: mode === 'light' 
-            ? '0 2px 8px rgba(0, 0, 0, 0.1)' 
-            : '0 2px 8px rgba(0, 0, 0, 0.3)',
-        }}
+        className={`bg-[#FF6B01] rounded-none ${
+          mode === 'light' ? 'shadow-[0_2px_8px_rgba(0,0,0,0.1)]' : 'shadow-[0_2px_8px_rgba(0,0,0,0.3)]'
+        }`}
       >
-        <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
+        <Toolbar className="px-4 sm:px-6">
           <Box 
             component={Link}
             to="/"
-            sx={{ 
-              flexGrow: 1, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1.5,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.9,
-              },
-              transition: 'opacity 0.2s ease',
-            }}
+            className="flex-grow flex items-center gap-3 no-underline cursor-pointer hover:opacity-90 transition-opacity duration-200"
           >
             <Box
               component="img"
               src={logoIcon}
               alt="TableBook Logo"
-              sx={{
-                width: { xs: 34, sm: 42 },
-                height: { xs: 34, sm: 42 },
-                filter: 'brightness(0) invert(1)', // Делает иконку белой
-                transition: 'transform 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
-              }}
+              className="w-[34px] h-[34px] sm:w-[42px] sm:h-[42px] brightness-0 invert transition-transform duration-200 hover:scale-105"
             />
             <Typography 
               variant="h6" 
               component="div" 
-              sx={{ 
-                fontWeight: 700,
-                color: '#FFFFFF',
-                fontSize: { xs: '1.1rem', sm: '1.35rem' },
-                letterSpacing: '0.5px',
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
+              className="font-bold text-white text-[1.1rem] sm:text-[1.35rem] tracking-wide bg-gradient-to-br from-white to-[#F5F5F5] bg-clip-text text-transparent"
             >
               TableBook
             </Typography>
@@ -78,14 +46,9 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/"
-            className={location.pathname === '/' ? 'active' : ''}
-            sx={{
-              mx: 0.5,
-              borderRadius: 0,
-              '&.active': {
-                borderBottom: '2px solid #FFFFFF',
-              },
-            }}
+            className={`mx-1 rounded-none ${
+              location.pathname === '/' ? 'border-b-2 border-white' : ''
+            }`}
           >
             Главная
           </Button>
@@ -93,14 +56,9 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/admin"
-            className={location.pathname === '/admin' || location.pathname.startsWith('/admin/') ? 'active' : ''}
-            sx={{
-              mx: 0.5,
-              borderRadius: 0,
-              '&.active': {
-                borderBottom: '2px solid #FFFFFF',
-              },
-            }}
+            className={`mx-1 rounded-none ${
+              location.pathname === '/admin' || location.pathname.startsWith('/admin/') ? 'border-b-2 border-white' : ''
+            }`}
           >
             Админ
           </Button>
@@ -108,21 +66,16 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/user"
-            className={location.pathname === '/user' ? 'active' : ''}
-            sx={{
-              mx: 0.5,
-              borderRadius: 0,
-              '&.active': {
-                borderBottom: '2px solid #FFFFFF',
-              },
-            }}
+            className={`mx-1 rounded-none ${
+              location.pathname === '/user' ? 'border-b-2 border-white' : ''
+            }`}
           >
             Пользователь
           </Button>
           <IconButton
             color="inherit"
             onClick={toggleTheme}
-            sx={{ ml: 2 }}
+            className="ml-4"
             aria-label="Переключить тему"
           >
             {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}

@@ -15,10 +15,8 @@ const queryClient = new QueryClient({
   },
 })
 
-// Определяем base path из переменных окружения
 const basename = import.meta.env.VITE_BASE_URL || import.meta.env.BASE_URL || '/'
 
-// Логирование переменных окружения в development режиме
 if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEBUG === 'true') {
   console.log('Environment variables:', {
     mode: import.meta.env.MODE,

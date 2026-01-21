@@ -56,6 +56,10 @@
       touch-action: none;
     }
 
+    &__canvas {
+      background-color: #FAFBFC;
+    }
+
     @media (max-width: 600px) {
       border-radius: 0;
     }

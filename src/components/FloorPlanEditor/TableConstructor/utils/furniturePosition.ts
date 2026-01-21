@@ -1,8 +1,5 @@
 import type { FurniturePosition, TableConfig } from '../types'
 
-/**
- * Вычисляет позицию мебели для круглого стола
- */
 export const calculateCircleFurniturePosition = (
   position: FurniturePosition,
   index: number,
@@ -23,9 +20,6 @@ export const calculateCircleFurniturePosition = (
   }
 }
 
-/**
- * Вычисляет позицию мебели для прямоугольного стола
- */
 export const calculateRectFurniturePosition = (
   position: FurniturePosition,
   config: TableConfig,
@@ -65,12 +59,9 @@ export const calculateRectFurniturePosition = (
       break
   }
 
-  return { x, y, rotation }
+  return { x, y, rotation   }
 }
 
-/**
- * Вычисляет позицию мебели на основе формы стола
- */
 export const calculateFurniturePosition = (
   position: FurniturePosition,
   index: number,

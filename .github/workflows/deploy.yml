@@ -53,13 +53,13 @@ jobs:
         env:
           NODE_ENV: production
           # Переменные окружения для production сборки
-          # Можно добавить через Secrets в настройках репозитория
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.example.com/api' }}
-          VITE_APP_NAME: TableBook
+          # Обновите значения согласно вашим .env.production файлам
+          VITE_API_URL: 'https://restaurant-api.defenx.crazedns.ru/api/v1'
+          VITE_BASE_URL: '/frontend/'
+          VITE_APP_NAME: 'TableBook'
           VITE_APP_VERSION: ${{ github.ref_name }}
-          VITE_ENABLE_DEBUG: false
-          VITE_ENABLE_MOCK_API: false
-          VITE_BASE_URL: /frontend/
+          VITE_IS_DEV: 'false'
+          VITE_ENABLE_DEBUG: 'false'
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

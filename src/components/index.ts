@@ -1,5 +1,3 @@
-// Централизованный экспорт компонентов для удобного импорта
-
 export { default as Layout } from './Layout/Layout'
 export { default as FloorPlanEditor } from './FloorPlanEditor/FloorPlanEditor'
 export { default as FloorPlanViewer } from './FloorPlanViewer/FloorPlanViewer'

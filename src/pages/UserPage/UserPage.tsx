@@ -1,4 +1,5 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import {
   Container,
   Typography,
@@ -15,18 +16,23 @@ import { Upload as UploadIcon, InsertDriveFile as FileIcon, Close as CloseIcon }
 import FloorPlanViewerSVG from '../../components/FloorPlanViewerSVG/FloorPlanViewerSVG'
 import BookingPanel from '../../components/BookingPanel/BookingPanel'
 import TimeRangeSelector from '../../components/TimeRangeSelector/TimeRangeSelector'
+import { useVenue, useBookings, useCreateBooking } from '../../domain/hooks'
 import type { FloorPlanData, FloorPlanElement } from '../../types/floorPlan'
 import type { TimeSlot, Booking, VenueSettings } from '../../types/booking'
 import { generateTimeSlots, getAvailableTimeSlots } from '../../utils/timeSlots'
 import './UserPage.scss'
 
 const UserPage = () => {
+  const { venueId: venueIdParam } = useParams<{ venueId?: string }>()
+  const venueId = venueIdParam ? Number(venueIdParam) : null
+  
+  const { data: venue } = useVenue(venueId || 0, { enabled: !!venueId })
+  
   const [jsonInput, setJsonInput] = useState('')
   const [floorPlanData, setFloorPlanData] = useState<FloorPlanData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // Состояние для бронирования
   const [selectedTable, setSelectedTable] = useState<FloorPlanElement | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date()
@@ -35,15 +41,57 @@ const UserPage = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null)
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null)
   const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null)
-  const [bookings, setBookings] = useState<Booking[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
+  
+  const bookingsQueryParams = useMemo(() => {
+    if (!venueId || !selectedDate) return undefined
+    
+    const startOfDay = `${selectedDate}T00:00:00`
+    const endOfDay = `${selectedDate}T23:59:59`
+    
+    return {
+      venueId,
+      startTime: new Date(startOfDay).toISOString(),
+      endTime: new Date(endOfDay).toISOString(),
+    }
+  }, [venueId, selectedDate])
+  
+  const { data: bookingsResponse = [] } = useBookings(bookingsQueryParams, { enabled: !!bookingsQueryParams })
+  const createBooking = useCreateBooking()
+  
+  const bookings: Booking[] = useMemo(() => {
+    return bookingsResponse.map((b) => ({
+      id: String(b.id),
+      tableId: b.tableId,
+      floorId: floorPlanData?.currentFloorId || '',
+      timeSlot: {
+        id: `slot-${b.id}`,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        date: selectedDate,
+      },
+      guestName: b.guestName || 'Гость',
+      guestPhone: b.guestPhone || '',
+      guestEmail: b.guestEmail,
+      numberOfGuests: 1, // TODO: получить из API
+      status: 'confirmed' as const, // TODO: получить из API
+      createdAt: b.createdAt,
+      updatedAt: b.updatedAt,
+      notes: b.notes,
+    }))
+  }, [bookingsResponse, floorPlanData, selectedDate])
+  
+  useEffect(() => {
+    if (venue?.floorPlan) {
+      setFloorPlanData(venue.floorPlan)
+    }
+  }, [venue])
 
   const handleLoadJson = () => {
     try {
       setError(null)
       const parsed = JSON.parse(jsonInput) as FloorPlanData
 
-      // Валидация базовой структуры
       if (!parsed.stage || !parsed.floors || !Array.isArray(parsed.floors)) {
         throw new Error('Неверный формат JSON: отсутствуют обязательные поля stage или floors')
       }
@@ -170,28 +218,36 @@ const UserPage = () => {
 
   // Обработчик отправки бронирования
   const handleBookingSubmit = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!selectedTable || !selectedTimeSlot) {
+    if (!selectedTable || !selectedTimeSlot || !venueId) {
       alert('Пожалуйста, выберите стол и время')
       return
     }
 
-    const newBooking: Booking = {
-      ...bookingData,
-      id: `booking-${Date.now()}`,
-      tableId: selectedTable.id,
-      floorId: floorPlanData?.currentFloorId || '',
-      timeSlot: selectedTimeSlot,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    setBookings((prev) => [...prev, newBooking])
-    alert('Бронирование успешно создано!')
-    
-    // Сбрасываем форму и закрываем Drawer
-    setSelectedTable(null)
-    setSelectedTimeSlot(null)
-    setDrawerOpen(false)
+    // Создаем бронирование через API
+    createBooking.mutate(
+      {
+        venueId,
+        tableId: selectedTable.id,
+        startTime: selectedTimeSlot.startTime,
+        endTime: selectedTimeSlot.endTime,
+        guestName: bookingData.guestName,
+        guestPhone: bookingData.guestPhone,
+        guestEmail: bookingData.guestEmail,
+        notes: bookingData.notes,
+      },
+      {
+        onSuccess: () => {
+          alert('Бронирование успешно создано!')
+          // Сбрасываем форму и закрываем Drawer
+          setSelectedTable(null)
+          setSelectedTimeSlot(null)
+          setDrawerOpen(false)
+        },
+        onError: (error) => {
+          alert(`Ошибка при создании бронирования: ${error.message}`)
+        },
+      }
+    )
   }
 
   const handleClear = () => {
@@ -317,7 +373,7 @@ const UserPage = () => {
                 ref={fileInputRef}
                 type="file"
                 accept=".json,application/json"
-                style={{ display: 'none' }}
+                className="hidden"
                 onChange={handleFileUpload}
               />
               <Button variant="outlined" onClick={handleClear}>

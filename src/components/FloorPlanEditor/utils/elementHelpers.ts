@@ -1,9 +1,6 @@
 import type { FloorPlanElement } from '../../../types/floorPlan'
 import { DEFAULT_TABLE_RADIUS, DEFAULT_TABLE_WIDTH, DEFAULT_TABLE_HEIGHT } from '../constants'
 
-/**
- * Создает новый элемент стола
- */
 export const createTableElement = (
   x: number,
   y: number,
@@ -42,9 +39,6 @@ export const createTableElement = (
   }
 }
 
-/**
- * Создает новый элемент стены
- */
 export const createWallElement = (
   x: number,
   y: number,
@@ -65,9 +59,6 @@ export const createWallElement = (
   }
 }
 
-/**
- * Создает новый элемент двери
- */
 export const createDoorElement = (
   x: number,
   y: number,
@@ -88,9 +79,6 @@ export const createDoorElement = (
   }
 }
 
-/**
- * Создает новый элемент окна
- */
 export const createWindowElement = (
   x: number,
   y: number,
@@ -111,9 +99,6 @@ export const createWindowElement = (
   }
 }
 
-/**
- * Клонирует элемент с новым ID
- */
 export const cloneElement = (element: FloorPlanElement): FloorPlanElement => {
   return {
     ...element,
@@ -123,9 +108,6 @@ export const cloneElement = (element: FloorPlanElement): FloorPlanElement => {
   }
 }
 
-/**
- * Обновляет элемент, сохраняя неизменные свойства
- */
 export const updateElement = (
   element: FloorPlanElement,
   updates: Partial<FloorPlanElement>

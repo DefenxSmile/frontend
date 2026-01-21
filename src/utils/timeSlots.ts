@@ -1,10 +1,7 @@
 import type { TimeSlot, VenueSettings, Booking } from '../types/booking'
 
-/**
- * Генерирует временные слоты для бронирования на основе настроек заведения
- */
 export const generateTimeSlots = (
-  date: string, // YYYY-MM-DD
+  date: string,
   settings: VenueSettings
 ): TimeSlot[] => {
   const slots: TimeSlot[] = []
@@ -27,7 +24,7 @@ export const generateTimeSlots = (
   endTime.setHours(closeHour, closeMinute, 0, 0)
 
   const interval = settings.timeSlotInterval || 30
-  const duration = settings.defaultBookingDuration || 120 // 2 часа по умолчанию
+  const duration = settings.defaultBookingDuration || 120
 
   let currentTime = new Date(startTime)
 
@@ -48,9 +45,6 @@ export const generateTimeSlots = (
   return slots
 }
 
-/**
- * Фильтрует доступные временные слоты, исключая уже забронированные
- */
 export const getAvailableTimeSlots = (
   allSlots: TimeSlot[],
   bookings: Booking[],
@@ -63,9 +57,6 @@ export const getAvailableTimeSlots = (
   return allSlots.filter((slot) => !bookedSlotIds.includes(slot.id))
 }
 
-/**
- * Проверяет доступность стола в указанный временной слот
- */
 export const isTableAvailable = (
   tableId: string,
   timeSlot: TimeSlot,

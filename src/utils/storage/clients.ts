@@ -1,5 +1,3 @@
-// Утилиты для работы с клиентами в localStorage
-
 const STORAGE_KEY_CLIENTS = 'restoreserve_clients'
 
 export interface StoredClient {
@@ -47,7 +45,6 @@ export const deleteClient = (id: string): void => {
   localStorage.setItem(STORAGE_KEY_CLIENTS, JSON.stringify(filtered))
 }
 
-// Инициализация моковых данных
 export const initializeMockData = (): void => {
   const clients = getClients()
   if (clients.length === 0) {
