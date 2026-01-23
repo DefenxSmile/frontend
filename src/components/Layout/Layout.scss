@@ -1,21 +1,18 @@
 .layout {
   min-height: 100vh;
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  overscroll-behavior: none;
   position: relative;
   transition: background-color 0.3s ease;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 
   .layout-content {
     flex: 1;
     padding: 0;
-    overflow: hidden;
-    min-height: 0;
-    overscroll-behavior: none;
     position: relative;
     transition: background-color 0.3s ease;
+    overscroll-behavior: none;
   }
 }
 

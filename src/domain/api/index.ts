@@ -1,7 +1,7 @@
 export { baseApi } from './baseApi';
 export { venuesApi } from './venues';
-export { bookingsApi } from './bookings';
-
-export type { VenueRequestDto, VenueResponseDto } from './venues';
-export type { BookingRequestDto, BookingResponseDto, BookingQueryParams } from './bookings';
+export { reservationsApi } from './bookings';
+export { reservationObjectsApi } from './reservationObjects';
+export { authApi } from './auth';
+export { tablesApi } from './tables';
 

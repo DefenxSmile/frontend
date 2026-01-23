@@ -1,2 +1,0 @@
-export { useTableConstructor } from './useTableConstructor'
-

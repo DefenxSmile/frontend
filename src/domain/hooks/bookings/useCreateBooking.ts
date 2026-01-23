@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { bookingsApi } from '../../api/bookings';
-import type { BookingRequestDto, BookingResponseDto } from '../../api/bookings';
+import { reservationsApi } from '../../api/bookings';
+import type { ReservationRequestDto, ReservationDto } from '../../../types';
 
-export const useCreateBooking = () => {
+export const useCreateReservation = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<BookingResponseDto, Error, BookingRequestDto>({
-    mutationFn: (data: BookingRequestDto) => bookingsApi.createBooking(data),
+  return useMutation<ReservationDto, Error, ReservationRequestDto>({
+    mutationFn: (data: ReservationRequestDto) => reservationsApi.createReservation(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
     },
   });
 };

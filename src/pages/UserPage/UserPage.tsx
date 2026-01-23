@@ -1,505 +1,1202 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react';
 import {
-  Container,
-  Typography,
   Box,
-  Paper,
-  TextField,
   Button,
+  Card,
+  CardContent,
+  TextField,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  CircularProgress,
   Alert,
+  Tabs,
+  Tab,
   Chip,
+  Fade,
+  Container,
+  Grow,
   Drawer,
   IconButton,
-} from '@mui/material'
-import { Upload as UploadIcon, InsertDriveFile as FileIcon, Close as CloseIcon } from '@mui/icons-material'
-import FloorPlanViewerSVG from '../../components/FloorPlanViewerSVG/FloorPlanViewerSVG'
-import BookingPanel from '../../components/BookingPanel/BookingPanel'
-import TimeRangeSelector from '../../components/TimeRangeSelector/TimeRangeSelector'
-import { useVenue, useBookings, useCreateBooking } from '../../domain/hooks'
-import type { FloorPlanData, FloorPlanElement } from '../../types/floorPlan'
-import type { TimeSlot, Booking, VenueSettings } from '../../types/booking'
-import { generateTimeSlots, getAvailableTimeSlots } from '../../utils/timeSlots'
-import './UserPage.scss'
+} from '@mui/material';
+import {
+  LocationOn as LocationOnIcon,
+  CalendarToday as CalendarIcon,
+  TableRestaurant as TableIcon,
+  Person as PersonIcon,
+  AccessTime as TimeIcon,
+  Restaurant as RestaurantIcon,
+  Phone as PhoneIcon,
+  Close as CloseIcon,
+} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ru } from 'date-fns/locale/ru';
+import { useVenues } from '../../domain/hooks/venues/useVenues';
+import { useVenue } from '../../domain/hooks/venues/useVenue';
+import { useReservationObjects } from '../../domain/hooks/reservationObjects/useReservationObjects';
+import { useReservations } from '../../domain/hooks/bookings/useBookings';
+import { useCreateReservation } from '../../domain/hooks/bookings/useCreateBooking';
+import { useCancelReservation } from '../../domain/hooks/bookings/useDeleteBooking';
+import { useTimeSlots } from '../../hooks/useTimeSlots';
+import { useConfirmDialog } from '../../hooks/useConfirmDialog';
+import {
+  ReservationsTable,
+  ConfirmDialog,
+} from '../../components';
+import './UserPage.scss';
 
 const UserPage = () => {
-  const { venueId: venueIdParam } = useParams<{ venueId?: string }>()
-  const venueId = venueIdParam ? Number(venueIdParam) : null
-  
-  const { data: venue } = useVenue(venueId || 0, { enabled: !!venueId })
-  
-  const [jsonInput, setJsonInput] = useState('')
-  const [floorPlanData, setFloorPlanData] = useState<FloorPlanData | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  
-  const [selectedTable, setSelectedTable] = useState<FloorPlanElement | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
-  })
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null)
-  const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null)
-  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  
-  const bookingsQueryParams = useMemo(() => {
-    if (!venueId || !selectedDate) return undefined
-    
-    const startOfDay = `${selectedDate}T00:00:00`
-    const endOfDay = `${selectedDate}T23:59:59`
-    
-    return {
-      venueId,
-      startTime: new Date(startOfDay).toISOString(),
-      endTime: new Date(endOfDay).toISOString(),
-    }
-  }, [venueId, selectedDate])
-  
-  const { data: bookingsResponse = [] } = useBookings(bookingsQueryParams, { enabled: !!bookingsQueryParams })
-  const createBooking = useCreateBooking()
-  
-  const bookings: Booking[] = useMemo(() => {
-    return bookingsResponse.map((b) => ({
-      id: String(b.id),
-      tableId: b.tableId,
-      floorId: floorPlanData?.currentFloorId || '',
-      timeSlot: {
-        id: `slot-${b.id}`,
-        startTime: b.startTime,
-        endTime: b.endTime,
-        date: selectedDate,
-      },
-      guestName: b.guestName || 'Гость',
-      guestPhone: b.guestPhone || '',
-      guestEmail: b.guestEmail,
-      numberOfGuests: 1, // TODO: получить из API
-      status: 'confirmed' as const, // TODO: получить из API
-      createdAt: b.createdAt,
-      updatedAt: b.updatedAt,
-      notes: b.notes,
-    }))
-  }, [bookingsResponse, floorPlanData, selectedDate])
-  
+  const [mounted, setMounted] = useState(false);
+  const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null);
+  const [filterDate, setFilterDate] = useState<Date | null>(new Date());
+  const [filterTimeSlot, setFilterTimeSlot] = useState<string>('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [guests, setGuests] = useState<number>(2);
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [notes, setNotes] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+
+  const { data: venues } = useVenues();
+
   useEffect(() => {
-    if (venue?.floorPlan) {
-      setFloorPlanData(venue.floorPlan)
+    setMounted(true);
+  }, []);
+
+  // Устанавливаем первое заведение по умолчанию
+  useEffect(() => {
+    if (venues && venues.length > 0 && !selectedVenueId) {
+      setSelectedVenueId(venues[0].id);
     }
-  }, [venue])
+  }, [venues, selectedVenueId]);
 
-  const handleLoadJson = () => {
-    try {
-      setError(null)
-      const parsed = JSON.parse(jsonInput) as FloorPlanData
+  const { data: selectedVenue } = useVenue(selectedVenueId || 0, { enabled: !!selectedVenueId });
+  const { data: reservationObjects } = useReservationObjects(
+    selectedVenueId ? { venueId: selectedVenueId } : undefined,
+    { enabled: !!selectedVenueId }
+  );
+  const { data: allReservations } = useReservations(
+    selectedVenueId ? { reservationObjectId: undefined } : undefined,
+    { enabled: !!selectedVenueId }
+  );
+  const { data: myReservations } = useReservations(undefined, { enabled: true });
+  const createReservation = useCreateReservation();
+  const cancelReservation = useCancelReservation();
+  const timeSlots = useTimeSlots();
+  const confirmDialog = useConfirmDialog();
 
-      if (!parsed.stage || !parsed.floors || !Array.isArray(parsed.floors)) {
-        throw new Error('Неверный формат JSON: отсутствуют обязательные поля stage или floors')
-      }
+  // Фильтрация столов по занятости
+  const filteredObjects = useMemo(() => {
+    if (!reservationObjects) {
+      return [];
+    }
 
-      if (parsed.floors.length === 0) {
-        throw new Error('JSON должен содержать хотя бы один этаж')
-      }
+    if (!filterDate || !filterTimeSlot) {
+      return reservationObjects.map((obj) => ({ ...obj, isOccupied: false }));
+    }
 
-      // Проверяем структуру этажей
-      for (const floor of parsed.floors) {
-        if (!floor.id || !floor.name || !Array.isArray(floor.elements)) {
-          throw new Error('Неверный формат этажей в JSON')
+    const [hours, minutes] = filterTimeSlot.split(':').map(Number);
+    const filterStart = new Date(filterDate);
+    filterStart.setHours(hours, minutes, 0, 0);
+    const filterEnd = new Date(filterStart);
+    filterEnd.setHours(hours + 2, minutes, 0, 0);
+
+    return reservationObjects.map((obj) => {
+      const isOccupied = allReservations?.some((reservation) => {
+        if (reservation.reservationObjectId !== obj.id || reservation.status === 'CANCELLED') {
+          return false;
         }
-      }
+        const resStart = new Date(reservation.startDateTime);
+        const resEnd = new Date(reservation.endDateTime);
+        // Проверяем пересечение временных интервалов
+        return resStart < filterEnd && resEnd > filterStart;
+      });
 
-      // Проверяем наличие currentFloorId
-      if (!parsed.currentFloorId) {
-        // Если нет currentFloorId, устанавливаем первый этаж
-        parsed.currentFloorId = parsed.floors[0].id
-      }
-
-      setFloorPlanData(parsed)
-      // Сбрасываем выбранный стол при загрузке нового плана
-      setSelectedTable(null)
-      setSelectedTimeSlot(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при парсинге JSON')
-      setFloorPlanData(null)
-    }
-  }
-
-  // Обработчик клика на стол
-  const handleTableClick = (table: FloorPlanElement) => {
-    setSelectedTable(table)
-    setSelectedTimeSlot(null) // Сбрасываем выбранное время при выборе нового стола
-    setDrawerOpen(true) // Открываем Drawer при выборе стола
-  }
-
-  // Настройки заведения (по умолчанию)
-  const venueSettings: VenueSettings = useMemo(() => {
-    const defaultSettings: VenueSettings = {
-      venueId: floorPlanData?.metadata?.venueId || '',
-      clientId: floorPlanData?.metadata?.clientId || '',
-      operatingHours: {
-        monday: { open: '10:00', close: '22:00', isClosed: false },
-        tuesday: { open: '10:00', close: '22:00', isClosed: false },
-        wednesday: { open: '10:00', close: '22:00', isClosed: false },
-        thursday: { open: '10:00', close: '22:00', isClosed: false },
-        friday: { open: '10:00', close: '23:00', isClosed: false },
-        saturday: { open: '10:00', close: '23:00', isClosed: false },
-        sunday: { open: '10:00', close: '22:00', isClosed: false },
-      },
-      timeSlotInterval: 30,
-      defaultBookingDuration: 120,
-      advanceBookingDays: 30,
-    }
-
-    if (floorPlanData?.venueSettings) {
       return {
-        ...defaultSettings,
-        ...floorPlanData.venueSettings,
-        operatingHours: floorPlanData.venueSettings.operatingHours || defaultSettings.operatingHours,
-      } as VenueSettings
+        ...obj,
+        isOccupied: !!isOccupied,
+      };
+    });
+  }, [reservationObjects, allReservations, filterDate, filterTimeSlot]);
+
+  const handleTableClick = (objectId: number) => {
+    setSelectedObjectId(objectId);
+    setSelectedDate(filterDate || new Date());
+    setSelectedTime(filterTimeSlot || '');
+    setDrawerOpen(true);
+  };
+
+  const handleBookTable = async () => {
+    if (!selectedVenueId || !selectedDate || !selectedTime || !selectedObjectId || !clientName || !clientPhone) {
+      return;
     }
 
-    return defaultSettings
-  }, [floorPlanData])
+    const startDateTime = new Date(selectedDate);
+    const [hours, minutes] = selectedTime.split(':').map(Number);
+    startDateTime.setHours(hours, minutes, 0, 0);
 
-  // Генерация всех временных слотов для выбранной даты (для обратной совместимости)
-  const allTimeSlots = useMemo(() => {
-    if (!selectedDate || !floorPlanData) return []
-    return generateTimeSlots(selectedDate, venueSettings)
-  }, [selectedDate, venueSettings, floorPlanData])
+    const endDateTime = new Date(startDateTime);
+    endDateTime.setHours(hours + 2, minutes, 0, 0);
 
-  // Получаем все столы из текущего этажа
-  const allTables = useMemo(() => {
-    if (!floorPlanData) return []
-    const currentFloor = floorPlanData.floors.find((f) => f.id === floorPlanData.currentFloorId)
-    return currentFloor?.elements.filter((el) => el.type === 'table') || []
-  }, [floorPlanData])
-
-  // Генерация доступных временных слотов для выбранного стола
-  const availableTimeSlots = useMemo(() => {
-    if (!selectedTable) return allTimeSlots
-    return getAvailableTimeSlots(allTimeSlots, bookings, selectedTable.id)
-  }, [allTimeSlots, selectedTable, bookings])
-
-  // Обработчик изменения временного диапазона
-  const handleTimeRangeChange = (startTime: string | null, endTime: string | null) => {
-    setSelectedStartTime(startTime)
-    setSelectedEndTime(endTime)
-    
-    // Создаем TimeSlot из выбранного диапазона для совместимости с BookingPanel
-    if (startTime && endTime) {
-      const timeSlot: TimeSlot = {
-        id: `custom-${startTime}-${endTime}`,
-        startTime,
-        endTime,
-        date: selectedDate,
-      }
-      setSelectedTimeSlot(timeSlot)
-    } else {
-      setSelectedTimeSlot(null)
+    try {
+      await createReservation.mutateAsync({
+        reservationObjectId: selectedObjectId,
+        startDateTime: startDateTime.toISOString(),
+        endDateTime: endDateTime.toISOString(),
+        notes: notes || undefined,
+      });
+      setDrawerOpen(false);
+      setSelectedTime('');
+      setSelectedObjectId(null);
+      setNotes('');
+      setClientName('');
+      setClientPhone('');
+      setActiveTab(1);
+    } catch (error) {
+      console.error('Error creating reservation:', error);
     }
-  }
+  };
 
-  // Фильтруем бронирования для выбранного времени (для отображения статуса столов)
-  const bookingsForSelectedTime = useMemo(() => {
-    if (!selectedStartTime || !selectedEndTime) return []
-    
-    const start = new Date(selectedStartTime)
-    const end = new Date(selectedEndTime)
-    
-    return bookings.filter((booking) => {
-      if (booking.status === 'cancelled') return false
-      
-      const bookingStart = new Date(booking.timeSlot.startTime)
-      const bookingEnd = new Date(booking.timeSlot.endTime)
-      
-      // Проверяем пересечение временных диапазонов
-      return start < bookingEnd && end > bookingStart
-    })
-  }, [bookings, selectedStartTime, selectedEndTime])
+  const handleCancelReservation = async (id: number) => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Отмена бронирования',
+      message: 'Вы уверены, что хотите отменить это бронирование?',
+      confirmText: 'Отменить',
+      cancelText: 'Нет',
+      confirmColor: 'error',
+    });
 
-  // Обработчик отправки бронирования
-  const handleBookingSubmit = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!selectedTable || !selectedTimeSlot || !venueId) {
-      alert('Пожалуйста, выберите стол и время')
-      return
-    }
-
-    // Создаем бронирование через API
-    createBooking.mutate(
-      {
-        venueId,
-        tableId: selectedTable.id,
-        startTime: selectedTimeSlot.startTime,
-        endTime: selectedTimeSlot.endTime,
-        guestName: bookingData.guestName,
-        guestPhone: bookingData.guestPhone,
-        guestEmail: bookingData.guestEmail,
-        notes: bookingData.notes,
-      },
-      {
-        onSuccess: () => {
-          alert('Бронирование успешно создано!')
-          // Сбрасываем форму и закрываем Drawer
-          setSelectedTable(null)
-          setSelectedTimeSlot(null)
-          setDrawerOpen(false)
-        },
-        onError: (error) => {
-          alert(`Ошибка при создании бронирования: ${error.message}`)
-        },
-      }
-    )
-  }
-
-  const handleClear = () => {
-    setJsonInput('')
-    setFloorPlanData(null)
-    setError(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
+    if (confirmed) {
       try {
-        const content = e.target?.result as string
-        setJsonInput(content)
-        // Автоматически загружаем после чтения файла
-        setTimeout(() => {
-          const parsed = JSON.parse(content) as FloorPlanData
-          if (!parsed.stage || !parsed.floors || !Array.isArray(parsed.floors) || parsed.floors.length === 0) {
-            throw new Error('Неверный формат JSON: отсутствуют обязательные поля stage или floors')
-          }
-          // Устанавливаем currentFloorId если его нет
-          if (!parsed.currentFloorId) {
-            parsed.currentFloorId = parsed.floors[0].id
-          }
-          setFloorPlanData(parsed)
-          setError(null)
-        }, 100)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка при чтении файла')
+        await cancelReservation.mutateAsync(id);
+      } catch (error) {
+        console.error('Error canceling reservation:', error);
       }
     }
-    reader.readAsText(file)
-  }
+  };
+
+  const selectedObject = reservationObjects?.find((obj) => obj.id === selectedObjectId);
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 }, px: { xs: 1, sm: 3 } }}>
-      <Box 
-        className="user-page"
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ru}>
+      <Box
         sx={{
-          backgroundColor: 'background.default',
+          minHeight: '100vh',
+          backgroundColor: '#F8F9FA',
+          paddingTop: { xs: '48px', sm: '64px' },
+          paddingBottom: '64px',
         }}
       >
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom 
-          sx={{ 
-            fontWeight: 700, 
-            mb: 1,
-            fontSize: { xs: '1.5rem', sm: '2rem' },
-          }}
-        >
-          Бронирование столика
-        </Typography>
-        <Typography 
-          variant="body1" 
-          sx={{ 
-            color: 'text.secondary', 
-            mb: { xs: 2, sm: 3 },
-            fontSize: { xs: '0.875rem', sm: '1rem' },
-          }}
-        >
-          Выберите столик на схеме и укажите желаемое время для бронирования
-        </Typography>
-
-        {!floorPlanData ? (
-          <Paper elevation={1} sx={{ p: 3, borderRadius: '12px', mb: 3 }}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                Введите JSON данные
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={12}
-                value={jsonInput}
-                onChange={(e) => setJsonInput(e.target.value)}
-                placeholder='{"stage": {...}, "elements": [...], "floors": [...]}'
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    fontFamily: 'monospace',
-                    fontSize: '13px',
-                  },
-                }}
-              />
-            </Box>
-
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                startIcon={<UploadIcon />}
-                onClick={handleLoadJson}
-                disabled={!jsonInput.trim()}
-                sx={{
-                  background: 'linear-gradient(135deg, #FF6B01 0%, #E55A00 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #E55A00 0%, #CC4F00 100%)',
-                  },
-                }}
-              >
-                Загрузить схему
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<FileIcon />}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Загрузить из файла
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,application/json"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-              <Button variant="outlined" onClick={handleClear}>
-                Очистить
-              </Button>
-            </Box>
-          </Paper>
-        ) : (
-          <>
-            <Paper elevation={1} sx={{ p: 2, borderRadius: '12px', mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    {floorPlanData.metadata?.venueName || 'Схема зала'}
-                  </Typography>
-                  {floorPlanData.metadata?.clientName && (
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {floorPlanData.metadata.clientName}
+        <Container maxWidth="lg">
+          {/* Блок выбора заведения */}
+          <Grow in={mounted} timeout={600}>
+            <Card
+              sx={{
+                backgroundColor: 'white',
+                borderRadius: '24px',
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                marginBottom: '32px',
+                padding: { xs: '24px', sm: '32px' },
+                minHeight: '120px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: '24px', width: '100%', alignItems: { xs: 'flex-start', md: 'center' } }}>
+                {selectedVenue ? (
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                        color: '#1F2937',
+                        marginBottom: '8px',
+                        letterSpacing: '-0.02em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {selectedVenue.name}
                     </Typography>
-                  )}
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  {selectedTable && (
-                    <Chip
-                      label={`Выбран стол: ${selectedTable.label || selectedTable.id}`}
-                      color="primary"
-                      size="small"
-                    />
-                  )}
-                  <Button variant="outlined" size="small" onClick={handleClear}>
-                    Загрузить другой план
-                  </Button>
-                </Box>
+                    {selectedVenue.address && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6B7280' }}>
+                        <LocationOnIcon sx={{ fontSize: '18px' }} />
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: '0.875rem',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {selectedVenue.address}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: '#9CA3AF',
+                        fontSize: '0.9375rem',
+                      }}
+                    >
+                      Выберите заведение
+                    </Typography>
+                  </Box>
+                )}
+                <FormControl
+                  sx={{
+                    minWidth: { xs: '100%', md: '280px' },
+                    backgroundColor: '#F9FAFB',
+                    borderRadius: '12px',
+                  }}
+                >
+                  <Select
+                    value={selectedVenueId || ''}
+                    onChange={(e) => setSelectedVenueId(e.target.value as number)}
+                    sx={{
+                      color: '#1F2937',
+                      fontWeight: 500,
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#D1D5DB',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                        borderWidth: '2px',
+                      },
+                    }}
+                  >
+                    {venues?.map((venue) => (
+                      <MenuItem key={venue.id} value={venue.id}>
+                        {venue.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Box>
-            </Paper>
+            </Card>
+          </Grow>
 
-            {/* Временная линейка для выбора произвольного времени */}
-            <TimeRangeSelector
-              selectedDate={selectedDate}
-              venueSettings={venueSettings}
-              bookings={bookings}
-              tables={allTables}
-              selectedStartTime={selectedStartTime}
-              selectedEndTime={selectedEndTime}
-              onTimeRangeChange={handleTimeRangeChange}
-              minDuration={30}
-            />
+          {selectedVenueId && (
+            <>
+              {/* Табы */}
+              <Grow in={mounted} timeout={800} style={{ transitionDelay: '200ms' }}>
+                <Box
+                  sx={{
+                    marginBottom: '32px',
+                    backgroundColor: 'white',
+                    borderRadius: '16px',
+                    padding: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                  }}
+                >
+                  <Tabs
+                    value={activeTab}
+                    onChange={(_, newValue) => setActiveTab(newValue)}
+                    sx={{
+                      '& .MuiTab-root': {
+                        textTransform: 'none',
+                        fontSize: '0.9375rem',
+                        fontWeight: 600,
+                        minHeight: '56px',
+                        padding: '12px 24px',
+                        color: '#6B7280',
+                        borderRadius: '12px',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                          color: '#1F2937',
+                        },
+                      },
+                      '& .Mui-selected': {
+                        color: '#667eea',
+                        backgroundColor: '#F3F4F6',
+                      },
+                      '& .MuiTabs-indicator': {
+                        display: 'none',
+                      },
+                    }}
+                  >
+                    <Tab
+                      label="Забронировать"
+                      icon={<CalendarIcon sx={{ fontSize: '20px', marginRight: '8px' }} />}
+                      iconPosition="start"
+                    />
+                    <Tab
+                      label="Мои бронирования"
+                      icon={<TableIcon sx={{ fontSize: '20px', marginRight: '8px' }} />}
+                      iconPosition="start"
+                    />
+                  </Tabs>
+                </Box>
+              </Grow>
 
-            <Box 
-              sx={{ 
-                height: { xs: 'calc(100vh - 200px)', sm: 'calc(100vh - 300px)' }, 
-                minHeight: { xs: '400px', sm: '600px' },
-                width: '100%',
+              {activeTab === 0 && (
+                <Fade in={activeTab === 0} timeout={300}>
+                  <Box>
+                    {/* Фильтр по времени */}
+                    <Card
+                      sx={{
+                        backgroundColor: 'white',
+                        borderRadius: '24px',
+                        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                        marginBottom: '32px',
+                        padding: '24px',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          marginBottom: '20px',
+                        }}
+                      >
+                        <TimeIcon sx={{ fontSize: '24px', color: '#667eea' }} />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '1.125rem',
+                            color: '#1F2937',
+                          }}
+                        >
+                          Фильтр по времени
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                          gap: '20px',
+                        }}
+                      >
+                        <Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginBottom: '12px',
+                            }}
+                          >
+                            <CalendarIcon sx={{ fontSize: '20px', color: '#667eea' }} />
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                                color: '#374151',
+                              }}
+                            >
+                              Дата
+                            </Typography>
+                          </Box>
+                          <DatePicker
+                            value={filterDate}
+                            onChange={(newValue) => setFilterDate(newValue)}
+                            format="dd MMMM yyyy"
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                variant: 'outlined',
+                                sx: {
+                                  '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                    backgroundColor: '#F9FAFB',
+                                    '&:hover': {
+                                      backgroundColor: '#F3F4F6',
+                                    },
+                                    '&.Mui-focused': {
+                                      backgroundColor: 'white',
+                                    },
+                                  },
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#E5E7EB',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#D1D5DB',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#667eea',
+                                    borderWidth: '2px',
+                                  },
+                                },
+                              },
+                            }}
+                          />
+                        </Box>
+                        <Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginBottom: '12px',
+                            }}
+                          >
+                            <TimeIcon sx={{ fontSize: '20px', color: '#667eea' }} />
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                                color: '#374151',
+                              }}
+                            >
+                              Время
+                            </Typography>
+                          </Box>
+                          <FormControl fullWidth>
+                            <Select
+                              value={filterTimeSlot}
+                              onChange={(e) => setFilterTimeSlot(e.target.value)}
+                              displayEmpty
+                              sx={{
+                                borderRadius: '12px',
+                                backgroundColor: '#F9FAFB',
+                                '&:hover': {
+                                  backgroundColor: '#F3F4F6',
+                                },
+                                '&.Mui-focused': {
+                                  backgroundColor: 'white',
+                                },
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#E5E7EB',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#D1D5DB',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#667eea',
+                                  borderWidth: '2px',
+                                },
+                              }}
+                            >
+                              <MenuItem value="">
+                                <em>Все время</em>
+                              </MenuItem>
+                              {timeSlots.map((time) => (
+                                <MenuItem key={time} value={time}>
+                                  {time}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Box>
+                      </Box>
+                    </Card>
+
+                    {/* Список столов */}
+                    <Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          marginBottom: '20px',
+                        }}
+                      >
+                        <RestaurantIcon sx={{ fontSize: '24px', color: '#667eea' }} />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '1.125rem',
+                            color: '#1F2937',
+                          }}
+                        >
+                          Доступные столы
+                        </Typography>
+                      </Box>
+                      {reservationObjects && reservationObjects.length > 0 ? (
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                              xs: '1fr',
+                              sm: 'repeat(2, 1fr)',
+                              md: 'repeat(3, 1fr)',
+                            },
+                            gap: '16px',
+                          }}
+                        >
+                          {filteredObjects.map((obj, index) => (
+                            <Grow
+                              in={mounted}
+                              timeout={600}
+                              style={{ transitionDelay: `${index * 100}ms` }}
+                              key={obj.id}
+                            >
+                              <Card
+                                onClick={() => !obj.isOccupied && handleTableClick(obj.id)}
+                                sx={{
+                                  backgroundColor: obj.isOccupied ? '#F9FAFB' : 'white',
+                                  border: `2px solid ${obj.isOccupied ? '#E5E7EB' : '#E5E7EB'}`,
+                                  borderRadius: '16px',
+                                  cursor: obj.isOccupied ? 'not-allowed' : 'pointer',
+                                  transition: 'all 0.2s ease-in-out',
+                                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                                  overflow: 'hidden',
+                                  opacity: obj.isOccupied ? 0.6 : 1,
+                                  position: 'relative',
+                                  '&:hover': {
+                                    transform: obj.isOccupied ? 'none' : 'translateY(-4px)',
+                                    boxShadow: obj.isOccupied ? '0 1px 3px rgba(0, 0, 0, 0.05)' : '0 8px 24px rgba(0, 0, 0, 0.12)',
+                                    borderColor: obj.isOccupied ? '#E5E7EB' : '#667eea',
+                                  },
+                                }}
+                              >
+                                {obj.isOccupied && (
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      top: '12px',
+                                      right: '12px',
+                                      zIndex: 1,
+                                    }}
+                                  >
+                                    <Chip
+                                      label="Занят"
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: '#EF4444',
+                                        color: 'white',
+                                        fontWeight: 600,
+                                      }}
+                                    />
+                                  </Box>
+                                )}
+                                {obj.imageUrl ? (
+                                  <Box
+                                    component="img"
+                                    src={obj.imageUrl}
+                                    alt={obj.name}
+                                    sx={{
+                                      width: '100%',
+                                      height: '200px',
+                                      objectFit: 'cover',
+                                      display: 'block',
+                                    }}
+                                  />
+                                ) : (
+                                  <Box
+                                    sx={{
+                                      width: '100%',
+                                      height: '200px',
+                                      backgroundColor: '#F3F4F6',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                  >
+                                    <RestaurantIcon sx={{ fontSize: '64px', color: '#D1D5DB' }} />
+                                  </Box>
+                                )}
+                                <CardContent sx={{ padding: '20px !important' }}>
+                                  <Typography
+                                    variant="h6"
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: '1rem',
+                                      color: obj.isOccupied ? '#9CA3AF' : '#1F2937',
+                                      marginBottom: '12px',
+                                    }}
+                                  >
+                                    {obj.name}
+                                  </Typography>
+                                  {obj.description && (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontSize: '0.875rem',
+                                        color: obj.isOccupied ? '#D1D5DB' : '#6B7280',
+                                        marginBottom: '12px',
+                                      }}
+                                    >
+                                      {obj.description}
+                                    </Typography>
+                                  )}
+                                  {obj.capacity && (
+                                    <Chip
+                                      icon={<PersonIcon sx={{ fontSize: '16px !important' }} />}
+                                      label={`До ${obj.capacity} чел.`}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: obj.isOccupied ? '#E5E7EB' : '#F3F4F6',
+                                        color: obj.isOccupied ? '#9CA3AF' : '#6B7280',
+                                        fontWeight: 500,
+                                      }}
+                                    />
+                                  )}
+                                </CardContent>
+                              </Card>
+                            </Grow>
+                          ))}
+                        </Box>
+                      ) : (
+                        <Card
+                          sx={{
+                            backgroundColor: 'white',
+                            borderRadius: '24px',
+                            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                            padding: '48px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <RestaurantIcon sx={{ fontSize: '64px', color: '#D1D5DB', marginBottom: '16px' }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: '#6B7280',
+                              marginBottom: '8px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Нет доступных столов
+                          </Typography>
+                        </Card>
+                      )}
+                    </Box>
+                  </Box>
+                </Fade>
+              )}
+
+              {activeTab === 1 && (
+                <Fade in={activeTab === 1} timeout={300}>
+                  <Box>
+                    <Card
+                      sx={{
+                        backgroundColor: 'white',
+                        borderRadius: '24px',
+                        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                        padding: '32px',
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '1.5rem',
+                          color: '#1F2937',
+                          marginBottom: '24px',
+                          letterSpacing: '-0.02em',
+                        }}
+                      >
+                        Мои бронирования
+                      </Typography>
+                      <ReservationsTable
+                        reservations={myReservations || []}
+                        showActions
+                        onCancel={handleCancelReservation}
+                      />
+                    </Card>
+                  </Box>
+                </Fade>
+              )}
+            </>
+          )}
+
+          {!selectedVenueId && (
+            <Alert
+              severity="info"
+              sx={{
+                borderRadius: '16px',
+                padding: '20px',
+                fontSize: '0.9375rem',
               }}
             >
-              <FloorPlanViewerSVG
-                data={floorPlanData}
-                bookings={selectedTimeSlot ? bookingsForSelectedTime : bookings}
-                onTableClick={handleTableClick}
-                selectedTableId={selectedTable?.id || null}
-                interactive={true}
-              />
-            </Box>
+              Выберите заведение для бронирования стола
+            </Alert>
+          )}
 
-            {/* Drawer для панели бронирования */}
-            <Drawer
-              anchor="right"
-              open={drawerOpen}
-              onClose={() => setDrawerOpen(false)}
-              PaperProps={{
-                sx: {
-                  width: { xs: '100%', sm: 400 },
-                  maxWidth: '100%',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  borderLeft: { xs: 'none', sm: '1px solid #e0e0e0' },
-                },
-              }}
-              ModalProps={{
-                keepMounted: false, // Улучшает производительность на мобильных
-              }}
-            >
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                p: { xs: 1.5, sm: 2 }, 
-                borderBottom: '1px solid #e0e0e0',
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'background.paper',
-                zIndex: 1,
-              }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+          {/* Drawer для бронирования */}
+          <Drawer
+            anchor="right"
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            PaperProps={{
+              sx: {
+                width: { xs: '100%', sm: '480px' },
+                padding: '0',
+              },
+            }}
+          >
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {/* Заголовок Drawer */}
+              <Box
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  padding: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '1.25rem',
+                  }}
+                >
                   Бронирование стола
                 </Typography>
-                <IconButton 
-                  onClick={() => setDrawerOpen(false)} 
-                  size="small"
-                  sx={{ 
-                    '&:hover': { backgroundColor: 'action.hover' },
+                <IconButton
+                  onClick={() => setDrawerOpen(false)}
+                  sx={{
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
                   }}
                 >
                   <CloseIcon />
                 </IconButton>
               </Box>
-              <Box sx={{ 
-                overflowY: 'auto', 
-                height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
-                WebkitOverflowScrolling: 'touch', // Плавная прокрутка на iOS
-              }}>
-                <BookingPanel
-                  selectedTable={selectedTable}
-                  selectedDate={selectedDate}
-                  selectedTimeSlot={selectedTimeSlot}
-                  onDateChange={setSelectedDate}
-                  onTimeSlotChange={setSelectedTimeSlot}
-                  onBookingSubmit={handleBookingSubmit}
-                  availableTimeSlots={availableTimeSlots}
-                />
-              </Box>
-            </Drawer>
-          </>
-        )}
-      </Box>
-    </Container>
-  )
-}
 
-export default UserPage
+              {/* Контент Drawer */}
+              <Box sx={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+                {selectedObject && (
+                  <Box sx={{ marginBottom: '24px' }}>
+                    {selectedObject.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={selectedObject.imageUrl}
+                        alt={selectedObject.name}
+                        sx={{
+                          width: '100%',
+                          height: '200px',
+                          objectFit: 'cover',
+                          borderRadius: '12px',
+                          marginBottom: '16px',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: '200px',
+                          backgroundColor: '#F3F4F6',
+                          borderRadius: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '16px',
+                        }}
+                      >
+                        <RestaurantIcon sx={{ fontSize: '64px', color: '#D1D5DB' }} />
+                      </Box>
+                    )}
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: '1.125rem',
+                        color: '#1F2937',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      {selectedObject.name}
+                    </Typography>
+                    {selectedObject.description && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.875rem',
+                          color: '#6B7280',
+                          marginBottom: '12px',
+                        }}
+                      >
+                        {selectedObject.description}
+                      </Typography>
+                    )}
+                    {selectedObject.capacity && (
+                      <Chip
+                        icon={<PersonIcon sx={{ fontSize: '16px !important' }} />}
+                        label={`До ${selectedObject.capacity} чел.`}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#F3F4F6',
+                          color: '#6B7280',
+                          fontWeight: 500,
+                        }}
+                      />
+                    )}
+                  </Box>
+                )}
+
+                {/* Дата и время */}
+                <Box sx={{ marginBottom: '24px' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <CalendarIcon sx={{ fontSize: '20px', color: '#667eea' }} />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#374151',
+                      }}
+                    >
+                      Дата бронирования
+                    </Typography>
+                  </Box>
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={(newValue) => setSelectedDate(newValue)}
+                    format="dd MMMM yyyy"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        variant: 'outlined',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px',
+                            backgroundColor: '#F9FAFB',
+                            '&:hover': {
+                              backgroundColor: '#F3F4F6',
+                            },
+                            '&.Mui-focused': {
+                              backgroundColor: 'white',
+                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#E5E7EB',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#D1D5DB',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#667eea',
+                            borderWidth: '2px',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ marginBottom: '24px' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <TimeIcon sx={{ fontSize: '20px', color: '#667eea' }} />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#374151',
+                      }}
+                    >
+                      Время бронирования
+                    </Typography>
+                  </Box>
+                  <FormControl fullWidth>
+                    <Select
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                      sx={{
+                        borderRadius: '12px',
+                        backgroundColor: '#F9FAFB',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'white',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#E5E7EB',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#D1D5DB',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: '2px',
+                        },
+                      }}
+                    >
+                      {timeSlots.map((time) => (
+                        <MenuItem key={time} value={time}>
+                          {time}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                <Box sx={{ marginBottom: '24px' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <PersonIcon sx={{ fontSize: '20px', color: '#667eea' }} />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#374151',
+                      }}
+                    >
+                      Количество гостей
+                    </Typography>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={guests}
+                    onChange={(e) => setGuests(parseInt(e.target.value) || 2)}
+                    inputProps={{ min: 1, max: 20 }}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                        backgroundColor: '#F9FAFB',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'white',
+                        },
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#D1D5DB',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                        borderWidth: '2px',
+                      },
+                    }}
+                  />
+                </Box>
+
+                {/* Данные клиента */}
+                <Box sx={{ marginBottom: '24px' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <PersonIcon sx={{ fontSize: '20px', color: '#667eea' }} />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#374151',
+                      }}
+                    >
+                      Ваши данные
+                    </Typography>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    label="Ваше имя"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    required
+                    variant="outlined"
+                    sx={{
+                      marginBottom: '16px',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                        backgroundColor: '#F9FAFB',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'white',
+                        },
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#D1D5DB',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                        borderWidth: '2px',
+                      },
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Телефон"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    required
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: (
+                        <Box sx={{ marginRight: '8px', color: '#6B7280' }}>
+                          <PhoneIcon sx={{ fontSize: '20px' }} />
+                        </Box>
+                      ),
+                    }}
+                    sx={{
+                      marginBottom: '16px',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                        backgroundColor: '#F9FAFB',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'white',
+                        },
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#D1D5DB',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                        borderWidth: '2px',
+                      },
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Примечания (необязательно)"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    placeholder="Особые пожелания, аллергии, предпочтения..."
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                        backgroundColor: '#F9FAFB',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'white',
+                        },
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#D1D5DB',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                        borderWidth: '2px',
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Кнопка бронирования */}
+              <Box sx={{ padding: '24px', borderTop: '1px solid #E5E7EB' }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  onClick={handleBookTable}
+                  disabled={
+                    !selectedDate ||
+                    !selectedTime ||
+                    !selectedObjectId ||
+                    !clientName ||
+                    !clientPhone ||
+                    createReservation.isPending
+                  }
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    padding: '16px 32px',
+                    fontSize: '1rem',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
+                    transition: 'all 0.3s ease-in-out',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                    },
+                    '&:disabled': {
+                      background: '#E5E7EB',
+                      color: '#9CA3AF',
+                      boxShadow: 'none',
+                    },
+                  }}
+                >
+                  {createReservation.isPending ? (
+                    <CircularProgress size={24} sx={{ color: 'white' }} />
+                  ) : (
+                    'Забронировать стол'
+                  )}
+                </Button>
+              </Box>
+            </Box>
+          </Drawer>
+
+          <ConfirmDialog
+            open={confirmDialog.open}
+            title={confirmDialog.options.title}
+            message={confirmDialog.options.message}
+            confirmText={confirmDialog.options.confirmText}
+            cancelText={confirmDialog.options.cancelText}
+            confirmColor={confirmDialog.options.confirmColor}
+            onConfirm={confirmDialog.handleConfirm}
+            onCancel={confirmDialog.handleCancel}
+          />
+        </Container>
+      </Box>
+    </LocalizationProvider>
+  );
+};
+
+export default UserPage;

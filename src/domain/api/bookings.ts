@@ -1,58 +1,43 @@
 import { baseApi } from './baseApi';
+import type { ReservationDto, ReservationRequestDto, ReservationUpdateDto, ReservationQueryParams } from '../../types';
+import { mockReservationsApi } from '../../mocks/reservations';
 
-export interface BookingRequestDto {
-  venueId: number;
-  tableId: string;
-  startTime: string;
-  endTime: string;
-  guestName?: string;
-  guestPhone?: string;
-  guestEmail?: string;
-  notes?: string;
-}
+const USE_MOCKS = import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false';
 
-export interface BookingResponseDto {
-  id: number;
-  venueId: number;
-  tableId: string;
-  startTime: string;
-  endTime: string;
-  guestName?: string;
-  guestPhone?: string;
-  guestEmail?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface BookingQueryParams {
-  venueId?: number;
-  tableId?: string;
-  startTime?: string;
-  endTime?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-export const bookingsApi = {
-  getBookings: async (params?: BookingQueryParams): Promise<BookingResponseDto[]> => {
-    return baseApi.get<BookingResponseDto[], BookingQueryParams>('/bookings', params);
+export const reservationsApi = {
+  getReservations: async (params?: ReservationQueryParams): Promise<ReservationDto[]> => {
+    if (USE_MOCKS) {
+      return mockReservationsApi.getReservations(params);
+    }
+    return baseApi.get<ReservationDto[], ReservationQueryParams>('/reservations', params);
   },
 
-  getBookingById: async (id: number): Promise<BookingResponseDto> => {
-    return baseApi.get<BookingResponseDto>(`/bookings/${id}`);
+  getReservationById: async (id: number): Promise<ReservationDto> => {
+    if (USE_MOCKS) {
+      return mockReservationsApi.getReservationById(id);
+    }
+    return baseApi.get<ReservationDto>(`/reservations/${id}`);
   },
 
-  createBooking: async (data: BookingRequestDto): Promise<BookingResponseDto> => {
-    return baseApi.post<BookingResponseDto>('/bookings', data);
+  createReservation: async (data: ReservationRequestDto): Promise<ReservationDto> => {
+    if (USE_MOCKS) {
+      return mockReservationsApi.createReservation(data);
+    }
+    return baseApi.post<ReservationDto>('/reservations', data);
   },
 
-  updateBooking: async (id: number, data: Partial<BookingRequestDto>): Promise<BookingResponseDto> => {
-    return baseApi.patch<BookingResponseDto>(`/bookings/${id}`, data);
+  updateReservation: async (id: number, data: ReservationUpdateDto): Promise<ReservationDto> => {
+    if (USE_MOCKS) {
+      return mockReservationsApi.updateReservation(id, data);
+    }
+    return baseApi.put<ReservationDto>(`/reservations/${id}`, data);
   },
 
-  deleteBooking: async (id: number): Promise<void> => {
-    return baseApi.delete<void>(`/bookings/${id}`);
+  cancelReservation: async (id: number): Promise<void> => {
+    if (USE_MOCKS) {
+      return mockReservationsApi.cancelReservation(id);
+    }
+    return baseApi.delete<void>(`/reservations/${id}`);
   },
 };
 

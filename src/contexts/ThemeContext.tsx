@@ -25,9 +25,9 @@ const createAppTheme = (mode: ThemeMode): Theme => {
     palette: {
       mode,
       primary: {
-        main: '#FF6B01',
-        light: '#FF8A33',
-        dark: '#E55A00',
+        main: '#667eea',
+        light: '#8B9AFF',
+        dark: '#5568d3',
         contrastText: '#FFFFFF',
       },
       secondary: {
@@ -88,9 +88,9 @@ const createAppTheme = (mode: ThemeMode): Theme => {
             },
           },
           containedPrimary: {
-            backgroundColor: '#FF6B01',
+            backgroundColor: '#667eea',
             '&:hover': {
-              backgroundColor: '#E55A00',
+              backgroundColor: '#5568d3',
             },
           },
         },

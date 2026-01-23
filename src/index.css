@@ -9,11 +9,10 @@
 }
 
 html {
-  overflow: hidden;
-  overscroll-behavior: none;
   height: 100%;
-  position: fixed;
   width: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -23,17 +22,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
-  overscroll-behavior: none;
-  height: 100%;
-  position: fixed;
-  width: 100%;
+  min-height: 100%;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
   min-height: 100vh;
-  height: 100vh;
-  overflow: hidden;
   overscroll-behavior: none;
 }

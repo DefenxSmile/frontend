@@ -1,6 +1,6 @@
-export { useBookings } from './useBookings';
-export { useBooking } from './useBooking';
-export { useCreateBooking } from './useCreateBooking';
-export { useUpdateBooking } from './useUpdateBooking';
-export { useDeleteBooking } from './useDeleteBooking';
+export { useReservations } from './useBookings';
+export { useReservation } from './useBooking';
+export { useCreateReservation } from './useCreateBooking';
+export { useUpdateReservation } from './useUpdateBooking';
+export { useCancelReservation } from './useDeleteBooking';
 

@@ -1,14 +1,56 @@
-.home-page {
-  text-align: center;
-  padding: 48px 24px;
-  overflow-y: auto;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-
-  &__actions {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.role-card {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Плавная анимация для всех интерактивных элементов
+.role-card * {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Улучшенная производительность анимаций
+@media (prefers-reduced-motion: no-preference) {
+  .role-card {
+    animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+}
+
+// Отключение анимаций для пользователей с настройкой reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .role-card,
+  .role-card * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
