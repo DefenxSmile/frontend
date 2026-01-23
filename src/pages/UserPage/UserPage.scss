@@ -1,12 +1,9 @@
 .user-page {
-  padding: 24px;
-  min-height: calc(100vh - 200px);
-  overflow-y: auto;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-
-  @media (max-width: 600px) {
-    padding: 8px;
-    min-height: calc(100vh - 120px);
+  .MuiCard-root {
+    transition: transform 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
   }
 }

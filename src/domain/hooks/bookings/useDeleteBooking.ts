@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { bookingsApi } from '../../api/bookings';
+import { reservationsApi } from '../../api/bookings';
 
-export const useDeleteBooking = () => {
+export const useCancelReservation = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, number>({
-    mutationFn: (id: number) => bookingsApi.deleteBooking(id),
+    mutationFn: (id: number) => reservationsApi.cancelReservation(id),
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      queryClient.removeQueries({ queryKey: ['bookings', id] });
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.removeQueries({ queryKey: ['reservations', id] });
     },
   });
 };

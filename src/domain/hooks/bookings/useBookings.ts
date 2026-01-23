@@ -1,17 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { bookingsApi } from '../../api/bookings';
-import type { BookingResponseDto, BookingQueryParams } from '../../api/bookings';
+import { reservationsApi } from '../../api/bookings';
+import type { ReservationDto, ReservationQueryParams } from '../../../types';
 
-interface UseBookingsOptions {
+interface UseReservationsOptions {
   enabled?: boolean;
 }
 
-export const useBookings = (params?: BookingQueryParams, options: UseBookingsOptions = {}) => {
+export const useReservations = (params?: ReservationQueryParams, options: UseReservationsOptions = {}) => {
   const { enabled = true } = options;
 
-  return useQuery<BookingResponseDto[]>({
-    queryKey: ['bookings', params],
-    queryFn: () => bookingsApi.getBookings(params),
+  return useQuery<ReservationDto[]>({
+    queryKey: ['reservations', params],
+    queryFn: () => reservationsApi.getReservations(params),
     enabled,
   });
 };

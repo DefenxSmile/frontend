@@ -6,9 +6,8 @@ import axios, {
 } from 'axios';
 import { VITE_API_URL } from '../../config';
 
-// В режиме разработки используем прокси Vite для обхода CORS
-// В production используем прямой URL
-const API_BASE_URL = import.meta.env.DEV ? '/api' : (VITE_API_URL || '/api');
+// В dev режиме используем прокси /api/v1, в production - полный URL из env
+const API_BASE_URL = (VITE_API_URL || 'https://restaurant-api.defenx.crazedns.ru/api/v1');
 
 let authToken: string | null = null;
 
