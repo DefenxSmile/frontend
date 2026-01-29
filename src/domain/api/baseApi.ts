@@ -4,9 +4,8 @@ import axios, {
   type InternalAxiosRequestConfig,
   type AxiosResponse,
 } from 'axios';
-import { VITE_API_URL, VITE_IS_DEV } from '../../config';
 
-const API_BASE_URL = VITE_IS_DEV ? '/api' : (VITE_API_URL || '/api');
+const API_BASE_URL = '/api';
 
 let authToken: string | null = null;
 
