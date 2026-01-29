@@ -1,15 +1,16 @@
 import { baseApi } from './baseApi';
-import type { ReservationDto, ReservationRequestDto, ReservationUpdateDto, ReservationQueryParams } from '../../types';
+import type { ReservationDto, ReservationRequestDto, ReservationUpdateDto, ReservationQueryParams, PageResponse } from '../../types';
 import { mockReservationsApi } from '../../mocks/reservations';
 
-const USE_MOCKS = import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false';
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export const reservationsApi = {
   getReservations: async (params?: ReservationQueryParams): Promise<ReservationDto[]> => {
     if (USE_MOCKS) {
       return mockReservationsApi.getReservations(params);
     }
-    return baseApi.get<ReservationDto[], ReservationQueryParams>('/reservations', params);
+    const response = await baseApi.get<PageResponse<ReservationDto>, ReservationQueryParams>('/reservations', params);
+    return response.content;
   },
 
   getReservationById: async (id: number): Promise<ReservationDto> => {

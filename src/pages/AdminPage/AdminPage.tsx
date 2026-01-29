@@ -29,7 +29,7 @@ import './AdminPage.scss';
 
 const AdminPage = () => {
   const [mounted, setMounted] = useState(false);
-  const { data: venues, isLoading, error } = useVenues();
+  const { data: venues, isLoading, error, refetch } = useVenues();
   const deleteVenue = useDeleteVenue();
   const venueForm = useVenueForm();
   const confirmDialog = useConfirmDialog();
@@ -89,8 +89,18 @@ const AdminPage = () => {
               borderRadius: '16px',
               padding: '20px',
             }}
+            action={
+              <Button color="inherit" size="small" onClick={() => refetch()}>
+                Повторить
+              </Button>
+            }
           >
-            Ошибка загрузки заведений
+            <Typography variant="body1" sx={{ fontWeight: 600, marginBottom: '8px' }}>
+              Ошибка загрузки заведений
+            </Typography>
+            <Typography variant="body2">
+              {error instanceof Error ? error.message : 'Не удалось загрузить данные. Проверьте подключение к серверу.'}
+            </Typography>
           </Alert>
         </Container>
       </Box>
@@ -248,11 +258,15 @@ const AdminPage = () => {
                       <IconButton
                         size="small"
                         onClick={() => handleDelete(venue.id)}
+                        disabled={deleteVenue.isPending}
                         sx={{
                           padding: '6px',
                           color: '#EF4444',
                           '&:hover': {
                             backgroundColor: '#FEE2E2',
+                          },
+                          '&:disabled': {
+                            opacity: 0.5,
                           },
                         }}
                       >
