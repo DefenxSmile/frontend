@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { SnackbarProvider } from './contexts/SnackbarContext'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,9 +32,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter basename={basename}>
-          <App />
-        </BrowserRouter>
+        <SnackbarProvider>
+          <BrowserRouter basename={basename}>
+            <App />
+          </BrowserRouter>
+        </SnackbarProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

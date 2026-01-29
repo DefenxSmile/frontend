@@ -65,6 +65,8 @@ export const useVenueForm = () => {
     closeForm,
     submit,
     setFormData,
+    createVenue,
+    updateVenue,
   };
 };
 

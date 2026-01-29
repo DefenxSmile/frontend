@@ -4,10 +4,9 @@ import axios, {
   type InternalAxiosRequestConfig,
   type AxiosResponse,
 } from 'axios';
-import { VITE_API_URL } from '../../config';
+import { VITE_API_URL, VITE_IS_DEV } from '../../config';
 
-// В dev режиме используем прокси /api/v1, в production - полный URL из env
-const API_BASE_URL = (VITE_API_URL || 'https://restaurant-api.defenx.crazedns.ru/api/v1');
+const API_BASE_URL = VITE_IS_DEV ? '/api' : (VITE_API_URL || '/api');
 
 let authToken: string | null = null;
 
