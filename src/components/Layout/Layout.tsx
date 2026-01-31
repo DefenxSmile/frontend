@@ -12,24 +12,10 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <Box className="layout">
-      <AppBar 
-        position="static"
-        sx={{
-          backgroundColor: '#3B82F6',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <Toolbar className="px-4 sm:px-6">
-          <Box 
-            component={Link}
-            to="/"
-            className="flex-grow flex items-center gap-3 no-underline cursor-pointer hover:opacity-90 transition-opacity duration-200"
-          >
-            <Typography 
-              variant="h6" 
-              component="div" 
-              className="font-bold text-white text-[1.1rem] sm:text-[1.35rem] tracking-wide bg-gradient-to-br from-white to-[#F5F5F5] bg-clip-text text-transparent"
-            >
+      <AppBar position="static" className="layout-appbar">
+        <Toolbar className="layout-toolbar">
+          <Box component={Link} to="/" className="layout-logo">
+            <Typography variant="h6" component="div" className="layout-logo-text">
               TableBook
             </Typography>
           </Box>
@@ -37,9 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/"
-            className={`mx-1 rounded-none ${
-              location.pathname === '/' ? 'border-b-2 border-white' : ''
-            }`}
+            className={`layout-nav-btn ${location.pathname === '/' ? 'layout-nav-btn--active' : ''}`}
           >
             Главная
           </Button>
@@ -47,9 +31,7 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/admin"
-            className={`mx-1 rounded-none ${
-              location.pathname === '/admin' || location.pathname.startsWith('/admin/') ? 'border-b-2 border-white' : ''
-            }`}
+            className={`layout-nav-btn ${location.pathname === '/admin' || location.pathname.startsWith('/admin/') ? 'layout-nav-btn--active' : ''}`}
           >
             Админ
           </Button>
@@ -57,9 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/venue"
-            className={`mx-1 rounded-none ${
-              location.pathname === '/venue' || location.pathname.startsWith('/venue/') ? 'border-b-2 border-white' : ''
-            }`}
+            className={`layout-nav-btn ${location.pathname === '/venue' || location.pathname.startsWith('/venue/') ? 'layout-nav-btn--active' : ''}`}
           >
             Заведение
           </Button>
@@ -67,9 +47,7 @@ const Layout = ({ children }: LayoutProps) => {
             color="inherit"
             component={Link}
             to="/user"
-            className={`mx-1 rounded-none ${
-              location.pathname === '/user' ? 'border-b-2 border-white' : ''
-            }`}
+            className={`layout-nav-btn ${location.pathname === '/user' ? 'layout-nav-btn--active' : ''}`}
           >
             Гость
           </Button>

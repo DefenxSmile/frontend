@@ -1,0 +1,57 @@
+.confirm-dialog-paper {
+  border-radius: 8px !important;
+  min-width: 400px !important;
+}
+
+.confirm-dialog-title {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  padding: 24px 24px 16px;
+}
+
+.confirm-dialog-close-btn {
+  color: white !important;
+  padding: 6px !important;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+  }
+}
+
+.confirm-dialog-content {
+  padding: 0 24px;
+}
+
+.confirm-dialog-message {
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+.confirm-dialog-actions {
+  padding: 16px 24px 24px;
+  gap: 8px;
+}
+
+.confirm-dialog-btn-cancel {
+  text-transform: none;
+  font-weight: 500;
+  color: #6b7280;
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+}
+
+.confirm-dialog-btn-confirm {
+  text-transform: none;
+  font-weight: 500;
+  padding: 8px 16px;
+
+  &:hover {
+    &.MuiButton-colorError {
+      background-color: #dc2626;
+    }
+  }
+}

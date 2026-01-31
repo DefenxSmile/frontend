@@ -17,27 +17,13 @@ import {
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import type { ReservationDto, ReservationStatus } from '../../types';
+import './ReservationsTable.scss';
 
 interface ReservationsTableProps {
   reservations: ReservationDto[];
   showActions?: boolean;
   onCancel?: (id: number) => void;
 }
-
-const getStatusColor = (status: ReservationStatus): string => {
-  switch (status) {
-    case 'CONFIRMED':
-      return '#10B981';
-    case 'PENDING':
-      return '#F59E0B';
-    case 'CANCELLED':
-      return '#EF4444';
-    case 'COMPLETED':
-      return '#6B7280';
-    default:
-      return '#9CA3AF';
-  }
-};
 
 const getStatusLabel = (status: ReservationStatus): string => {
   switch (status) {
@@ -54,47 +40,15 @@ const getStatusLabel = (status: ReservationStatus): string => {
   }
 };
 
-const getStatusBgColor = (status: ReservationStatus): string => {
-  switch (status) {
-    case 'CONFIRMED':
-      return '#D1FAE5';
-    case 'PENDING':
-      return '#FEF3C7';
-    case 'CANCELLED':
-      return '#FEE2E2';
-    case 'COMPLETED':
-      return '#F3F4F6';
-    default:
-      return '#F9FAFB';
-  }
-};
-
 export const ReservationsTable = ({ reservations, showActions, onCancel }: ReservationsTableProps) => {
   if (reservations.length === 0) {
     return (
-      <Box
-        sx={{
-          textAlign: 'center',
-          padding: '48px 24px',
-        }}
-      >
-        <EventIcon sx={{ fontSize: '64px', color: '#D1D5DB', marginBottom: '16px' }} />
-        <Typography
-          variant="h6"
-          sx={{
-            color: '#6B7280',
-            marginBottom: '8px',
-            fontWeight: 600,
-          }}
-        >
+      <Box className="text-center py-12 px-6">
+        <EventIcon className="text-[64px] text-gray-300 mb-4" />
+        <Typography variant="h6" className="text-gray-500 mb-2 font-semibold">
           Нет бронирований
         </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: '#9CA3AF',
-          }}
-        >
+        <Typography variant="body2" className="text-gray-400">
           Здесь будут отображаться ваши бронирования
         </Typography>
       </Box>
@@ -102,149 +56,49 @@ export const ReservationsTable = ({ reservations, showActions, onCancel }: Reser
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-      }}
-    >
+    <Box className="flex flex-col gap-4">
       {reservations.map((reservation) => {
         const startDate = new Date(reservation.startDateTime);
         const endDate = new Date(reservation.endDateTime);
-        const statusColor = getStatusColor(reservation.status);
-        const statusBgColor = getStatusBgColor(reservation.status);
 
         return (
           <Card
             key={reservation.id}
-            sx={{
-              backgroundColor: 'white',
-              border: '1px solid #E5E7EB',
-              borderRadius: '16px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                borderColor: '#D1D5DB',
-              },
-            }}
+            className="bg-white border border-gray-200 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-300"
           >
-            <CardContent sx={{ padding: '24px !important' }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '20px',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                }}
-              >
-                {/* Левая часть - информация о бронировании */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <RestaurantIcon sx={{ fontSize: '24px', color: 'white' }} />
+            <CardContent className="!p-6">
+              <Box className="flex justify-between items-start mb-5 flex-wrap gap-4">
+                <Box className="flex-1 min-w-0">
+                  <Box className="flex items-center gap-3 mb-4">
+                    <Box className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center">
+                      <RestaurantIcon className="text-2xl text-white" />
                     </Box>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: '1.125rem',
-                          color: '#1F2937',
-                          marginBottom: '4px',
-                        }}
-                      >
+                    <Box className="flex-1 min-w-0">
+                      <Typography variant="h6" className="font-bold text-lg text-gray-800 mb-1">
                         {reservation.reservationObject?.name || 'Не указано'}
                       </Typography>
                       <Chip
                         label={getStatusLabel(reservation.status)}
                         size="small"
-                        sx={{
-                          backgroundColor: statusBgColor,
-                          color: statusColor,
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                          height: '24px',
-                        }}
+                        className={`reservations-table-chip reservations-table-chip--${reservation.status}`}
                       />
                     </Box>
                   </Box>
 
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-                      gap: '16px',
-                    }}
-                  >
-                    {/* Клиент */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '8px',
-                      }}
-                    >
-                      <PersonIcon sx={{ fontSize: '20px', color: '#6B7280', marginTop: '2px', flexShrink: 0 }} />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: '0.75rem',
-                            color: '#9CA3AF',
-                            marginBottom: '4px',
-                            fontWeight: 500,
-                          }}
-                        >
+                  <Box className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Box className="flex items-start gap-2">
+                      <PersonIcon className="text-gray-500 text-xl mt-0.5 shrink-0" />
+                      <Box className="min-w-0">
+                        <Typography variant="body2" className="text-xs text-gray-400 mb-1 font-medium">
                           Клиент
                         </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            fontSize: '0.9375rem',
-                            color: '#1F2937',
-                            fontWeight: 600,
-                            marginBottom: '4px',
-                          }}
-                        >
+                        <Typography variant="body1" className="text-[0.9375rem] text-gray-800 font-semibold mb-1">
                           {reservation.client?.name || 'Не указано'}
                         </Typography>
                         {reservation.client?.phone && (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                            }}
-                          >
-                            <PhoneIcon sx={{ fontSize: '14px', color: '#9CA3AF' }} />
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontSize: '0.875rem',
-                                color: '#6B7280',
-                              }}
-                            >
+                          <Box className="flex items-center gap-1">
+                            <PhoneIcon className="text-sm text-gray-400" />
+                            <Typography variant="body2" className="text-sm text-gray-500">
                               {reservation.client.phone}
                             </Typography>
                           </Box>
@@ -252,111 +106,41 @@ export const ReservationsTable = ({ reservations, showActions, onCancel }: Reser
                       </Box>
                     </Box>
 
-                    {/* Время */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '8px',
-                      }}
-                    >
-                      <TimeIcon sx={{ fontSize: '20px', color: '#6B7280', marginTop: '2px', flexShrink: 0 }} />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: '0.75rem',
-                            color: '#9CA3AF',
-                            marginBottom: '4px',
-                            fontWeight: 500,
-                          }}
-                        >
+                    <Box className="flex items-start gap-2">
+                      <TimeIcon className="text-gray-500 text-xl mt-0.5 shrink-0" />
+                      <Box className="min-w-0">
+                        <Typography variant="body2" className="text-xs text-gray-400 mb-1 font-medium">
                           Время бронирования
                         </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            fontSize: '0.9375rem',
-                            color: '#1F2937',
-                            fontWeight: 600,
-                            marginBottom: '2px',
-                          }}
-                        >
+                        <Typography variant="body1" className="text-[0.9375rem] text-gray-800 font-semibold mb-0.5">
                           {format(startDate, 'dd MMMM yyyy', { locale: ru })}
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: '0.875rem',
-                            color: '#6B7280',
-                          }}
-                        >
+                        <Typography variant="body2" className="text-sm text-gray-500">
                           {format(startDate, 'HH:mm', { locale: ru })} - {format(endDate, 'HH:mm', { locale: ru })}
                         </Typography>
                       </Box>
                     </Box>
                   </Box>
 
-                  {/* Примечания */}
                   {reservation.notes && (
-                    <Box
-                      sx={{
-                        marginTop: '16px',
-                        padding: '12px',
-                        backgroundColor: '#F9FAFB',
-                        borderRadius: '8px',
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: '0.75rem',
-                          color: '#9CA3AF',
-                          marginBottom: '4px',
-                          fontWeight: 500,
-                        }}
-                      >
+                    <Box className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <Typography variant="body2" className="text-xs text-gray-400 mb-1 font-medium">
                         Примечания
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: '0.875rem',
-                          color: '#374151',
-                          lineHeight: 1.6,
-                        }}
-                      >
+                      <Typography variant="body2" className="text-sm text-gray-700 leading-relaxed">
                         {reservation.notes}
                       </Typography>
                     </Box>
                   )}
                 </Box>
 
-                {/* Правая часть - действия */}
                 {showActions && onCancel && reservation.status !== 'CANCELLED' && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                    }}
-                  >
+                  <Box className="flex flex-col gap-2">
                     <Button
                       variant="outlined"
                       startIcon={<CancelIcon />}
                       onClick={() => onCancel(reservation.id)}
-                      sx={{
-                        borderColor: '#EF4444',
-                        color: '#EF4444',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderRadius: '8px',
-                        padding: '8px 16px',
-                        '&:hover': {
-                          borderColor: '#DC2626',
-                          backgroundColor: '#FEE2E2',
-                        },
-                      }}
+                      className="reservations-table-btn-cancel"
                     >
                       Отменить
                     </Button>

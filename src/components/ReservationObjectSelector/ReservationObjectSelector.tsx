@@ -28,28 +28,15 @@ export const ReservationObjectSelector = ({
         {filteredObjects.map((obj) => (
           <Card
             key={obj.id}
-            sx={{
-              backgroundColor: 'white',
-              border: `1px solid ${selectedId === obj.id ? '#3B82F6' : '#E5E7EB'}`,
-              borderRadius: '8px',
-              boxShadow: selectedId === obj.id ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              '&:hover': {
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                borderColor: selectedId === obj.id ? '#3B82F6' : '#D1D5DB',
-              },
-            }}
+            className={`cursor-pointer transition-all duration-200 rounded-lg ${
+              selectedId === obj.id
+                ? 'border-2 border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.1)] hover:shadow-[0_0_0_3px_rgba(59,130,246,0.1)]'
+                : 'border border-gray-200 hover:border-gray-300 hover:shadow-md'
+            }`}
             onClick={() => onSelect(obj.id)}
           >
-            <Box
-              sx={{
-                backgroundColor: '#F9FAFB',
-                padding: '16px',
-                borderBottom: '1px solid #E5E7EB',
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', fontSize: '1rem' }}>
+            <Box className="bg-gray-50 p-4 border-b border-gray-200">
+              <Typography variant="h6" className="font-semibold text-gray-900 text-base">
                 {obj.name}
               </Typography>
             </Box>

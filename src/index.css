@@ -32,3 +32,17 @@ body {
   min-height: 100vh;
   overscroll-behavior: none;
 }
+
+/* Ensure Tailwind layout utilities override MUI when both are used */
+.MuiBox-root.flex {
+  display: flex !important;
+}
+.MuiBox-root.grid {
+  display: grid !important;
+}
+.MuiBox-root.inline-flex {
+  display: inline-flex !important;
+}
+.MuiBox-root.block {
+  display: block !important;
+}

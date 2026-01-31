@@ -8,7 +8,7 @@ const initialFormData: VenueRequestDto = {
   address: '',
   description: '',
   phone: '',
-  imageUrl: undefined,
+  image: undefined,
 };
 
 export const useVenueForm = () => {
@@ -27,7 +27,7 @@ export const useVenueForm = () => {
         address: venue.address || '',
         description: venue.description || '',
         phone: venue.phone || '',
-        imageUrl: venue.imageUrl,
+        image: venue.image,
       });
     } else {
       setEditingVenue(null);

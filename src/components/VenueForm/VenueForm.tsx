@@ -17,6 +17,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import type { VenueDto, VenueRequestDto } from '../../types';
+import './VenueForm.scss';
 
 interface VenueFormProps {
   open: boolean;
@@ -38,7 +39,7 @@ export const VenueForm = ({
   onChange,
 }: VenueFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(formData.imageUrl || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(formData.image?.url ?? null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -60,7 +61,7 @@ export const VenueForm = ({
       reader.onloadend = () => {
         const result = reader.result as string;
         setImagePreview(result);
-        onChange({ ...formData, imageUrl: result });
+        onChange({ ...formData, image: { id: 0, url: result } });
       };
       reader.readAsDataURL(file);
     }
@@ -68,14 +69,14 @@ export const VenueForm = ({
 
   const handleRemoveImage = () => {
     setImagePreview(null);
-    onChange({ ...formData, imageUrl: undefined });
+    onChange({ ...formData, image: undefined });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   const handleClose = () => {
-    setImagePreview(formData.imageUrl || null);
+    setImagePreview(formData.image?.url ?? null);
     onClose();
   };
 
@@ -85,24 +86,15 @@ export const VenueForm = ({
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '24px',
-        },
-      }}
+      PaperProps={{ className: 'venue-form-dialog', sx: { borderRadius: '24px' } }}
     >
-      <DialogTitle
-        sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          fontWeight: 700,
-          padding: '24px 32px',
-          fontSize: '1.25rem',
-        }}
-      >
-        {venue ? 'Редактировать заведение' : 'Создать заведение'}
+      <DialogTitle className="venue-form-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>{venue ? 'Редактировать заведение' : 'Создать заведение'}</span>
+        <IconButton onClick={handleClose} size="small" aria-label="Закрыть" className="venue-form-close-btn">
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ padding: '32px !important' }}>
+      <DialogContent className="venue-form-content">
         <TextField
           fullWidth
           label="Название"
@@ -110,12 +102,7 @@ export const VenueForm = ({
           onChange={(e) => onChange({ ...formData, name: e.target.value })}
           margin="normal"
           required
-          sx={{
-            marginBottom: '24px',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-            },
-          }}
+          className="venue-form-text-field"
         />
         <TextField
           fullWidth
@@ -123,12 +110,7 @@ export const VenueForm = ({
           value={formData.address || ''}
           onChange={(e) => onChange({ ...formData, address: e.target.value })}
           margin="normal"
-          sx={{
-            marginBottom: '24px',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-            },
-          }}
+          className="venue-form-text-field"
         />
         <TextField
           fullWidth
@@ -136,12 +118,7 @@ export const VenueForm = ({
           value={formData.phone || ''}
           onChange={(e) => onChange({ ...formData, phone: e.target.value })}
           margin="normal"
-          sx={{
-            marginBottom: '24px',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-            },
-          }}
+          className="venue-form-text-field"
         />
         <TextField
           fullWidth
@@ -151,87 +128,37 @@ export const VenueForm = ({
           margin="normal"
           multiline
           rows={4}
-          sx={{
-            marginBottom: '24px',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-            },
-          }}
+          className="venue-form-text-field"
         />
 
         {/* Загрузка изображения */}
-        <Box sx={{ marginTop: '24px' }}>
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: '#374151',
-              marginBottom: '12px',
-            }}
-          >
+        <Box className="mt-6">
+          <Typography variant="body2" className="text-sm font-semibold text-gray-700 mb-3">
             Изображение заведения
           </Typography>
 
           {imagePreview ? (
-            <Box
-              sx={{
-                position: 'relative',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid #E5E7EB',
-                marginBottom: '12px',
-              }}
-            >
+            <Box className="venue-form-image-preview">
               <Box
                 component="img"
                 src={imagePreview}
                 alt="Preview"
-                sx={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
+                className="w-full h-[200px] object-cover block"
               />
-              <IconButton
-                onClick={handleRemoveImage}
-                sx={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                  },
-                }}
-              >
+              <IconButton onClick={handleRemoveImage} className="venue-form-remove-image-btn">
                 <CloseIcon />
               </IconButton>
             </Box>
           ) : (
             <Box
-              sx={{
-                border: '2px dashed #D1D5DB',
-                borderRadius: '12px',
-                padding: '32px',
-                textAlign: 'center',
-                backgroundColor: '#F9FAFB',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: '#667eea',
-                  backgroundColor: '#F0F4FF',
-                },
-              }}
+              className="venue-form-upload-zone"
               onClick={() => fileInputRef.current?.click()}
             >
-              <ImageIcon sx={{ fontSize: '48px', color: '#9CA3AF', marginBottom: '12px' }} />
-              <Typography variant="body2" sx={{ color: '#6B7280', marginBottom: '8px' }}>
+              <ImageIcon className="text-5xl text-gray-400 mb-3" />
+              <Typography variant="body2" className="text-gray-500 mb-2">
                 Нажмите для загрузки изображения
               </Typography>
-              <Typography variant="caption" sx={{ color: '#9CA3AF', fontSize: '0.75rem' }}>
+              <Typography variant="caption" className="text-gray-400 text-xs">
                 PNG, JPG до 5MB
               </Typography>
             </Box>
@@ -242,7 +169,7 @@ export const VenueForm = ({
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
-            style={{ display: 'none' }}
+            className="hidden"
           />
 
           {!imagePreview && (
@@ -252,60 +179,24 @@ export const VenueForm = ({
               fullWidth
               startIcon={<CloudUploadIcon />}
               onClick={() => fileInputRef.current?.click()}
-              sx={{
-                marginTop: '12px',
-                borderRadius: '12px',
-                textTransform: 'none',
-                borderColor: '#D1D5DB',
-                color: '#374151',
-                '&:hover': {
-                  borderColor: '#667eea',
-                  backgroundColor: '#F0F4FF',
-                },
-              }}
+              className="venue-form-btn-outline"
             >
               Выбрать файл
             </Button>
           )}
         </Box>
       </DialogContent>
-      <DialogActions sx={{ padding: '24px 32px', gap: '12px' }}>
-        <Button
-          onClick={handleClose}
-          sx={{
-            color: '#6B7280',
-            textTransform: 'none',
-            fontWeight: 500,
-            borderRadius: '12px',
-            padding: '10px 24px',
-          }}
-        >
+      <DialogActions className="venue-form-actions">
+        <Button onClick={handleClose} className="venue-form-btn-cancel">
           Отмена
         </Button>
         <Button
           onClick={onSubmit}
           variant="contained"
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            textTransform: 'none',
-            fontWeight: 700,
-            borderRadius: '12px',
-            padding: '10px 24px',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%)',
-              boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
-            },
-            '&:disabled': {
-              background: '#E5E7EB',
-              color: '#9CA3AF',
-              boxShadow: 'none',
-            },
-          }}
+          className="venue-form-btn-submit"
           disabled={!formData.name || isLoading}
         >
-          {isLoading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : venue ? 'Сохранить' : 'Создать'}
+          {isLoading ? <CircularProgress size={20} className="!text-white" /> : venue ? 'Сохранить' : 'Создать'}
         </Button>
       </DialogActions>
     </Dialog>

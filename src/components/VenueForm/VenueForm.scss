@@ -1,0 +1,115 @@
+.venue-form-dialog {
+  border-radius: 24px !important;
+}
+
+.venue-form-title {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+  padding: 24px 32px;
+  font-size: 1.25rem;
+}
+
+.venue-form-close-btn {
+  color: white !important;
+  padding: 6px !important;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+  }
+}
+
+.venue-form-content {
+  padding: 32px !important;
+}
+
+.venue-form-text-field {
+  margin-bottom: 24px;
+
+  .MuiOutlinedInput-root {
+    border-radius: 12px;
+  }
+}
+
+.venue-form-upload-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  background-color: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    border-color: #667eea;
+    background-color: #f0f4ff;
+  }
+}
+
+.venue-form-image-preview {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.venue-form-remove-image-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.venue-form-actions {
+  padding: 24px 32px;
+  gap: 12px;
+}
+
+.venue-form-btn-cancel {
+  color: #6b7280;
+  text-transform: none;
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 10px 24px;
+}
+
+.venue-form-btn-submit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-transform: none;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 24px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    box-shadow: none;
+  }
+}
+
+.venue-form-btn-outline {
+  margin-top: 12px;
+  border-radius: 12px;
+  text-transform: none;
+  border-color: #d1d5db;
+  color: #374151;
+
+  &:hover {
+    border-color: #667eea;
+    background-color: #f0f4ff;
+  }
+}

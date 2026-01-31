@@ -1,8 +1,40 @@
 .reservation-object-card {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 20px 24px;
   transition: transform 0.2s ease-in-out;
-  
+
+  &:last-child {
+    border-bottom: none;
+  }
+
   &:hover {
     transform: translateY(-4px);
+  }
+}
+
+.reservation-object-card-content {
+  padding: 0 !important;
+}
+
+.reservation-object-card-icon-btn-edit {
+  padding: 6px !important;
+  color: #6b7280 !important;
+  &:hover {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+}
+
+.reservation-object-card-icon-btn-delete {
+  padding: 6px !important;
+  color: #6b7280 !important;
+  &:hover {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
   }
 }
 
