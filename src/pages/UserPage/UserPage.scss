@@ -1,9 +1,480 @@
 .user-page {
-  .MuiCard-root {
-    transition: transform 0.2s ease-in-out;
-    
-    &:hover {
-      transform: translateY(-2px);
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding-top: 48px;
+  padding-bottom: 64px;
+  box-sizing: border-box;
+
+  @media (min-width: 600px) {
+    padding-top: 64px;
+  }
+
+  // Layout blocks (replace Tailwind so layout works with MUI)
+  .user-page-venue-card {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    margin-bottom: 32px;
+    padding: 24px;
+    min-height: 120px;
+    @media (min-width: 600px) {
+      padding: 32px;
     }
+  }
+
+  .user-page-venue-row {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    align-items: flex-start;
+    @media (min-width: 768px) {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  .user-page-venue-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-page-venue-placeholder {
+    flex: 1;
+  }
+
+  .user-page-venue-select-wrap {
+    width: 100%;
+    @media (min-width: 768px) {
+      min-width: 280px;
+    }
+  }
+
+  .user-page-venue-address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+  }
+
+  .user-page-tabs-wrap {
+    margin-bottom: 32px;
+    background-color: white;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .user-page-filter-card {
+    background-color: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    margin-bottom: 32px;
+    padding: 24px;
+  }
+
+  .user-page-filter-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .user-page-filter-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .user-page-filter-field-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .user-page-tables-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .user-page-tables-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    @media (min-width: 600px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .user-page-card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .user-page-card-image-placeholder {
+    width: 100%;
+    height: 200px;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .user-page-card-chip-occupied {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1;
+  }
+
+  .user-page-empty-card {
+    background-color: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: 48px;
+    text-align: center;
+  }
+
+  .user-page-bookings-card {
+    background-color: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: 32px;
+  }
+
+  .user-page-drawer-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .user-page-drawer-content {
+    flex: 1;
+    overflow: auto;
+    padding: 24px;
+  }
+
+  .user-page-drawer-footer {
+    padding: 24px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .user-page-drawer-root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .user-page-section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .user-page-section-label--large {
+    margin-bottom: 16px;
+  }
+
+  .user-page-form-block {
+    margin-bottom: 24px;
+  }
+
+  .user-page-typography-title {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #1f2937;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    @media (min-width: 600px) {
+      font-size: 1.5rem;
+    }
+  }
+
+  .user-page-typography-address {
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6b7280;
+  }
+
+  .user-page-typography-placeholder {
+    color: #9ca3af;
+    font-size: 0.9375rem;
+  }
+
+  .user-page-typography-section {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #1f2937;
+  }
+
+  .user-page-typography-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .user-page-typography-card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1f2937;
+    margin-bottom: 12px;
+  }
+
+  .user-page-typography-card-desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+
+  .user-page-icon-primary {
+    color: #667eea;
+    font-size: 20px;
+  }
+
+  .user-page-icon-primary--lg {
+    font-size: 24px;
+  }
+
+  .user-page-form-control-wrap {
+    width: 100%;
+    background-color: #f9fafb;
+    border-radius: 12px;
+    @media (min-width: 768px) {
+      min-width: 280px;
+    }
+  }
+
+  // Tabs
+  .user-page-tabs {
+    .MuiTab-root {
+      text-transform: none;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      min-height: 56px;
+      padding: 12px 24px;
+      color: #6b7280;
+      border-radius: 12px;
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        background-color: #f3f4f6;
+        color: #1f2937;
+      }
+    }
+
+    .Mui-selected {
+      color: #667eea;
+      background-color: #f3f4f6;
+    }
+
+    .MuiTabs-indicator {
+      display: none;
+    }
+  }
+
+  // Select / TextField / DatePicker outline (use on Select, TextField, or slotProps.textField)
+  .user-page-outlined-input,
+  .user-page-outlined-input .MuiOutlinedInput-root {
+    border-radius: 12px;
+  }
+
+  .user-page-outlined-input .MuiOutlinedInput-root {
+    background-color: #f9fafb;
+
+    &:hover {
+      background-color: #f3f4f6;
+    }
+
+    &.Mui-focused {
+      background-color: white;
+    }
+  }
+
+  .user-page-outlined-input .MuiOutlinedInput-notchedOutline {
+    border-color: #e5e7eb;
+  }
+
+  .user-page-outlined-input:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #d1d5db;
+  }
+
+  .user-page-outlined-input.Mui-focused .MuiOutlinedInput-notchedOutline,
+  .user-page-outlined-input .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #667eea;
+    border-width: 2px;
+  }
+
+  // Drawer paper (also used on PaperProps, may render in portal)
+  .user-page-drawer-paper {
+    padding: 0 !important;
+    @media (max-width: 600px) {
+      width: 100% !important;
+    }
+    @media (min-width: 600px) {
+      width: 480px !important;
+    }
+  }
+
+  // IconButton in drawer header (белый крестик в стиле приложения)
+  .user-page-drawer-close-btn {
+    color: white !important;
+    padding: 6px !important;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+      color: white !important;
+    }
+  }
+
+  // Primary button
+  .user-page-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-transform: none;
+    font-weight: 700;
+    padding: 16px 32px;
+    font-size: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease-in-out;
+
+    &:hover {
+      background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      background: #e5e7eb;
+      color: #9ca3af;
+      box-shadow: none;
+    }
+  }
+
+  .user-page-table-card .MuiCardContent-root,
+  .user-page-table-card-content {
+    padding: 20px !important;
+    position: relative;
+  }
+
+  // Table card (clickable)
+  .user-page-table-card {
+    background-color: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    position: relative;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border-color: #667eea;
+    }
+
+    &.user-page-table-card--occupied {
+      background-color: #f9fafb;
+      cursor: not-allowed;
+      opacity: 0.6;
+
+      &:hover {
+        transform: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border-color: #e5e7eb;
+      }
+    }
+  }
+
+  // Chip "Занят"
+  .user-page-chip-occupied {
+    background-color: #ef4444;
+    color: white;
+    font-weight: 600;
+  }
+
+  // Chip capacity
+  .user-page-chip-capacity {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    font-weight: 500;
+
+    &.user-page-chip-capacity--occupied {
+      background-color: #e5e7eb;
+      color: #9ca3af;
+    }
+  }
+}
+
+// Drawer paper + content inside portal (Drawer renders outside .user-page)
+.user-page-drawer-paper {
+  padding: 0 !important;
+  @media (max-width: 600px) {
+    width: 100% !important;
+  }
+  @media (min-width: 600px) {
+    width: 480px !important;
+  }
+}
+
+.user-page-drawer-close-btn {
+  color: white !important;
+  padding: 6px !important;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+  }
+}
+
+.user-page-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  padding: 16px 32px !important;
+  font-size: 1rem !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
+  transition: all 0.3s ease-in-out !important;
+  &:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
+  }
+  &:active {
+    transform: translateY(0) !important;
+  }
+  &:disabled {
+    background: #e5e7eb !important;
+    color: #9ca3af !important;
+    box-shadow: none !important;
   }
 }

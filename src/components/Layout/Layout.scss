@@ -16,3 +16,54 @@
   }
 }
 
+.layout-appbar {
+  background-color: #3b82f6;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.layout-toolbar {
+  padding-left: 16px;
+  padding-right: 16px;
+  @media (min-width: 600px) {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+.layout-logo {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  color: inherit;
+  transition: opacity 0.2s;
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.layout-logo-text {
+  font-weight: 700;
+  color: white;
+  font-size: 1.1rem;
+  letter-spacing: 0.025em;
+  background: linear-gradient(to bottom right, white, #f5f5f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  @media (min-width: 600px) {
+    font-size: 1.35rem;
+  }
+}
+
+.layout-nav-btn {
+  margin-left: 4px;
+  margin-right: 4px;
+  border-radius: 0;
+  &.layout-nav-btn--active {
+    border-bottom: 2px solid white;
+  }
+}
+

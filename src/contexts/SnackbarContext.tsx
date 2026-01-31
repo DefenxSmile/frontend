@@ -59,11 +59,7 @@ export const SnackbarProvider = ({ children }: SnackbarProviderProps) => {
         <Alert
           onClose={handleClose}
           severity={snackbar.severity}
-          sx={{
-            width: '100%',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          }}
+          className="!w-full rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
         >
           {snackbar.message}
         </Alert>

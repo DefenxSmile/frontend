@@ -13,9 +13,9 @@ interface ClientFormProps {
 export const ClientForm = ({ name, phone, notes, onNameChange, onPhoneChange, onNotesChange }: ClientFormProps) => {
   return (
     <Box className="mb-6">
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <PersonIcon sx={{ color: '#3B82F6', fontSize: '20px' }} />
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', fontSize: '1rem' }}>
+      <Box className="flex items-center gap-2 mb-4">
+        <PersonIcon className="text-blue-500 text-xl" />
+        <Typography variant="h6" className="font-semibold text-gray-900 text-base">
           Ваши данные
         </Typography>
       </Box>

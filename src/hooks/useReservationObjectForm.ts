@@ -8,7 +8,7 @@ const initialFormData = (venueId: number): ReservationObjectRequestDto => ({
   description: '',
   capacity: undefined,
   venueId,
-  imageUrl: undefined,
+  image: undefined,
 });
 
 export const useReservationObjectForm = (venueId: number | null) => {
@@ -30,7 +30,7 @@ export const useReservationObjectForm = (venueId: number | null) => {
           description: object.description || '',
           capacity: object.capacity,
           venueId: object.venueId,
-          imageUrl: object.imageUrl,
+          image: object.images?.[0],
         });
       } else {
         setEditingObject(null);

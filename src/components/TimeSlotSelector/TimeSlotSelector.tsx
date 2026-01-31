@@ -16,9 +16,9 @@ export const TimeSlotSelector = ({
 }: TimeSlotSelectorProps) => {
   return (
     <Box className="mb-6">
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <TimeIcon sx={{ color: '#3B82F6', fontSize: '20px' }} />
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', fontSize: '1rem' }}>
+      <Box className="flex items-center gap-2 mb-4">
+        <TimeIcon className="text-blue-500 text-xl" />
+        <Typography variant="h6" className="font-semibold text-gray-900 text-base">
           Выберите время брони
         </Typography>
       </Box>
@@ -35,24 +35,13 @@ export const TimeSlotSelector = ({
                 variant={selectedTime === time ? 'contained' : 'outlined'}
                 onClick={() => onSelect(time)}
                 disabled={!available}
-                sx={{
-                  backgroundColor: selectedTime === time ? '#3B82F6' : 'white',
-                  color: selectedTime === time ? 'white' : available ? '#374151' : '#9CA3AF',
-                  border: `1px solid ${selectedTime === time ? '#3B82F6' : available ? '#D1D5DB' : '#E5E7EB'}`,
-                  borderRadius: '6px',
-                  padding: '12px',
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  '&:hover': {
-                    backgroundColor: selectedTime === time ? '#2563EB' : available ? '#F9FAFB' : 'white',
-                    borderColor: selectedTime === time ? '#2563EB' : available ? '#3B82F6' : '#E5E7EB',
-                  },
-                  '&:disabled': {
-                    backgroundColor: '#F9FAFB',
-                    color: '#9CA3AF',
-                    cursor: 'not-allowed',
-                  },
-                }}
+                className={`rounded-md py-3 normal-case font-medium ${
+                  selectedTime === time
+                    ? '!bg-blue-500 !text-white'
+                    : available
+                      ? '!bg-white !text-gray-700 hover:!bg-gray-50 hover:!border-blue-500'
+                      : '!bg-gray-50 !text-gray-400 !cursor-not-allowed'
+                }`}
               >
                 {time}
               </Button>

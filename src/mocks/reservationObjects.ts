@@ -37,7 +37,11 @@ export const mockReservationObjectsApi = {
     await delay(500);
     const newObject: ReservationObjectDto = {
       id: getNextReservationObjectId(),
-      ...data,
+      name: data.name,
+      description: data.description,
+      capacity: data.capacity,
+      venueId: data.venueId,
+      images: data.image ? [data.image] : [],
     };
     reservationObjects.push(newObject);
     return { ...newObject };
@@ -52,8 +56,19 @@ export const mockReservationObjectsApi = {
     if (index === -1) {
       throw new Error(`Reservation object with id ${id} not found`);
     }
-    reservationObjects[index] = { ...reservationObjects[index], ...data };
-    return { ...reservationObjects[index] };
+    const existing = reservationObjects[index];
+    const updated: ReservationObjectDto = {
+      ...existing,
+      name: data.name,
+      description: data.description,
+      capacity: data.capacity,
+      venueId: data.venueId,
+      images: data.image
+        ? [...(existing.images ?? []), data.image]
+        : existing.images,
+    };
+    reservationObjects[index] = updated;
+    return { ...updated };
   },
 
   deleteReservationObject: async (id: number): Promise<void> => {

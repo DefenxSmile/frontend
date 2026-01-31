@@ -12,7 +12,7 @@ export const mockVenues: VenueDto[] = [
     address: 'Москва, Петровка, 38',
     phone: '+7 (495) 123-45-67',
     description: 'Ресторан европейской кухни с уютной атмосферой',
-    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop',
+    image: { id: 1, url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop' },
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ export const mockVenues: VenueDto[] = [
     address: 'Москва, Тверская, 15',
     phone: '+7 (495) 234-56-78',
     description: 'Аутентичная итальянская кухня в центре Москвы',
-    imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
+    image: { id: 2, url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop' },
   },
   {
     id: 3,
@@ -28,7 +28,7 @@ export const mockVenues: VenueDto[] = [
     address: 'Москва, Арбат, 22',
     phone: '+7 (495) 345-67-89',
     description: 'Японская кухня и свежие морепродукты',
-    imageUrl: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=600&fit=crop',
+    image: { id: 3, url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=600&fit=crop' },
   },
 ];
 
@@ -40,7 +40,7 @@ export const mockReservationObjects: ReservationObjectDto[] = [
     capacity: 4,
     venueId: 1,
     venue: mockVenues[0],
-    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop',
+    images: [{ id: 4, url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop' }],
   },
   {
     id: 2,
@@ -49,7 +49,7 @@ export const mockReservationObjects: ReservationObjectDto[] = [
     capacity: 15,
     venueId: 1,
     venue: mockVenues[0],
-    imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
+    images: [{ id: 5, url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop' }],
   },
   {
     id: 3,
@@ -58,7 +58,7 @@ export const mockReservationObjects: ReservationObjectDto[] = [
     capacity: 2,
     venueId: 1,
     venue: mockVenues[0],
-    imageUrl: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=600&fit=crop',
+    images: [{ id: 6, url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=600&fit=crop' }],
   },
   {
     id: 4,
@@ -67,7 +67,7 @@ export const mockReservationObjects: ReservationObjectDto[] = [
     capacity: 6,
     venueId: 2,
     venue: mockVenues[1],
-    imageUrl: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop',
+    images: [{ id: 7, url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop' }],
   },
   {
     id: 5,
@@ -76,7 +76,7 @@ export const mockReservationObjects: ReservationObjectDto[] = [
     capacity: 8,
     venueId: 2,
     venue: mockVenues[1],
-    imageUrl: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=600&fit=crop',
+    images: [{ id: 8, url: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=600&fit=crop' }],
   },
   {
     id: 6,

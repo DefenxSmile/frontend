@@ -1,4 +1,7 @@
 import { baseApi } from './baseApi';
+import type { ImageDto } from '../../types';
+
+export type { ImageDto };
 
 export interface TableResponseDto {
   id: string;
@@ -7,7 +10,7 @@ export interface TableResponseDto {
   hallName: string;
   tableNumber: string;
   capacity: number;
-  imageUrl?: string;
+  image?: ImageDto;
   price?: number;
   status: 'available' | 'occupied' | 'reserved' | 'closing' | 'waiting';
   availableUntil?: string;

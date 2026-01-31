@@ -17,83 +17,41 @@ interface VenueCardProps {
 
 export const VenueCard = ({ venue, onEdit, onDelete }: VenueCardProps) => {
   return (
-    <Card
-      sx={{
-        backgroundColor: 'transparent',
-        border: 'none',
-        borderBottom: '1px solid #E5E7EB',
-        borderRadius: '0',
-        boxShadow: 'none',
-        padding: '20px 24px',
-        '&:last-child': {
-          borderBottom: 'none',
-        },
-      }}
-    >
-      <CardContent sx={{ padding: '0 !important' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <BusinessIcon sx={{ color: '#6B7280', fontSize: '20px' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', fontSize: '1rem' }}>
+    <Card className="venue-card">
+      <CardContent className="venue-card-content">
+        <Box className="flex items-center gap-2 mb-3">
+          <BusinessIcon className="text-gray-500 text-xl" />
+          <Typography variant="h6" className="font-semibold text-gray-900 text-base">
             {venue.name}
           </Typography>
         </Box>
         {venue.address && (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
-            <LocationOnIcon sx={{ color: '#9CA3AF', fontSize: '16px', marginTop: '2px' }} />
-            <Typography variant="body2" sx={{ color: '#6B7280', fontSize: '0.875rem' }}>
+          <Box className="flex items-start gap-2 mb-2">
+            <LocationOnIcon className="text-gray-400 text-base mt-0.5 shrink-0" />
+            <Typography variant="body2" className="text-gray-500 text-sm">
               {venue.address}
             </Typography>
           </Box>
         )}
         {venue.phone && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <PhoneIcon sx={{ color: '#9CA3AF', fontSize: '16px' }} />
-            <Typography variant="body2" sx={{ color: '#6B7280', fontSize: '0.875rem' }}>
+          <Box className="flex items-center gap-2 mb-2">
+            <PhoneIcon className="text-gray-400 text-base shrink-0" />
+            <Typography variant="body2" className="text-gray-500 text-sm">
               {venue.phone}
             </Typography>
           </Box>
         )}
         {venue.description && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#6B7280',
-              marginBottom: '12px',
-              fontSize: '0.875rem',
-              lineHeight: '1.5',
-            }}
-          >
+          <Typography variant="body2" className="text-gray-500 text-sm mb-3 leading-relaxed">
             {venue.description}
           </Typography>
         )}
-        <Box sx={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-          <IconButton
-            size="small"
-            onClick={() => onEdit(venue)}
-            sx={{
-              padding: '6px',
-              color: '#6B7280',
-              '&:hover': {
-                backgroundColor: '#F3F4F6',
-                color: '#374151',
-              },
-            }}
-          >
-            <EditIcon sx={{ fontSize: '18px' }} />
+        <Box className="flex gap-2 mt-3">
+          <IconButton size="small" onClick={() => onEdit(venue)} className="venue-card-icon-btn-edit">
+            <EditIcon className="text-lg" />
           </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => onDelete(venue.id)}
-            sx={{
-              padding: '6px',
-              color: '#6B7280',
-              '&:hover': {
-                backgroundColor: '#FEE2E2',
-                color: '#DC2626',
-              },
-            }}
-          >
-            <DeleteIcon sx={{ fontSize: '18px' }} />
+          <IconButton size="small" onClick={() => onDelete(venue.id)} className="venue-card-icon-btn-delete">
+            <DeleteIcon className="text-lg" />
           </IconButton>
         </Box>
       </CardContent>

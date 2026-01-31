@@ -12,7 +12,8 @@ let authToken: string | null = null;
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=UTF-8',
+    Accept: 'application/json',
   },
 });
 
@@ -80,6 +81,15 @@ axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    const method = String(config.method).toLowerCase();
+    if (config.data !== undefined && ['post', 'put', 'patch'].includes(method)) {
+      if (config.data instanceof FormData) {
+        // Для FormData не задаём Content-Type — браузер подставит multipart/form-data с boundary
+        delete config.headers['Content-Type'];
+      } else {
+        config.headers['Content-Type'] = 'application/json; charset=UTF-8';
+      }
     }
     return config;
   },

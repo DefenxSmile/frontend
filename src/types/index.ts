@@ -1,6 +1,9 @@
-// Types based on OpenAPI specification
-
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+
+export interface ImageDto {
+  id: number;
+  url: string;
+}
 
 export interface UserDto {
   id: number;
@@ -19,7 +22,7 @@ export interface VenueDto {
   address?: string;
   description?: string;
   phone?: string;
-  imageUrl?: string;
+  image?: ImageDto;
 }
 
 export interface VenueRequestDto {
@@ -27,7 +30,8 @@ export interface VenueRequestDto {
   address?: string;
   description?: string;
   phone?: string;
-  imageUrl?: string;
+  /** Для POST (создание); в PUT не передаётся */
+  image?: ImageDto;
 }
 
 export interface ReservationObjectDto {
@@ -37,7 +41,8 @@ export interface ReservationObjectDto {
   capacity?: number;
   venueId: number;
   venue?: VenueDto;
-  imageUrl?: string;
+  /** Массив изображений (по OpenAPI) */
+  images?: ImageDto[];
 }
 
 export interface ReservationObjectRequestDto {
@@ -45,7 +50,8 @@ export interface ReservationObjectRequestDto {
   description?: string;
   capacity?: number;
   venueId: number;
-  imageUrl?: string;
+  /** Только для превью в форме; в API не входит в part "object", отправляется в part "images" */
+  image?: ImageDto;
 }
 
 export interface ReservationDto {
